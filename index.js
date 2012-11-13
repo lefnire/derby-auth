@@ -112,6 +112,7 @@ function setupEveryauth(conf) {
 
     require('./lib/facebook')(everyauth, conf, ctx);
     require('./lib/linkedin')(everyauth, conf, ctx);
+    require('./lib/github')(everyauth, conf, ctx);
     require('./lib/password')(everyauth, conf, ctx);
 
     everyauth.everymodule.handleLogout(function(req, res) {
