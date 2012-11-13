@@ -1,8 +1,7 @@
-var derby = require('derby'), // possibly don't need, we're just using uuid() for now
-    everyauth = require('everyauth');
+var everyauth = require('everyauth'),
 
-// We keep these around, but they're set in the middleware function
-var model,
+    // We keep these around, but they're set in the middleware function
+    model,
     req,
     sess;
 
@@ -81,7 +80,7 @@ setupAccessControl = function(store) {
  */
 function newUser() {
     if (!sess.userId) {
-        sess.userId = derby.uuid();
+        sess.userId = model.id();
         return model.set("users." + sess.userId, {
             auth: {}
         });

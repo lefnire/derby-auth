@@ -28,7 +28,6 @@
         "lib": "lib"
     },
     "dependencies": {
-        "derby": "*",
         "everyauth": "git://github.com/lefnire/everyauth#express3"
     }
 }
