@@ -1,17 +1,36 @@
 var everyauth = require('everyauth'),
-    request = {
-        req:undefined,
+    _  = require('lodash'),
+    ctx = {
         model:undefined
     }; // Keep context variables around for ./lib modules as pseudo-closure, they're set in middleware
 
-module.exports.middleware = function(expressApp, store) {
+/**
+ * Creates middleware which provides authentication for DerbyJS
+ * @param expressApp
+ * @param {store} Racer store, used for configuring queries and accessControl
+ * @param {conf} Authentication keys - see node_modules/everyauth/example.conf.js for format
+ */
+module.exports.middleware = function(expressApp, store, conf) {
+    // Setup store
     setupQueries(store);
     setupAccessControl(store);
-    setupEveryauth();
+
+    // User passes in auth configuration keys originally. Provide defaults for ones not provided
+    conf = conf || {};
+    _.defaults(conf, require('everyauth/example/conf'));
+    setupEveryauth(conf);
+
     expressApp.use(function(req, res, next) {
-        request.req = req;
-        request.model = req.getModel();
-        newUser();
+        var model = ctx.model = req.getModel();
+
+        // New User - They get to play around before creating a new account.
+        var sess = model.session;
+        if (!sess.userId) {
+            sess.userId = model.id();
+            model.set("users." + sess.userId, {
+                auth: {}
+            });
+        }
         return next();
     });
     return everyauth.middleware();
@@ -66,22 +85,8 @@ setupAccessControl = function(store) {
     });
 };
 
-/**
- * -------- New user --------
- * They get to play around before creating a new account.
- */
-function newUser() {
-    var model = request.model, sess = model.session;
-    if (!sess.userId) {
-        sess.userId = model.id();
-        return model.set("users." + sess.userId, {
-            auth: {}
-        });
-    }
-};
-
 // Working on a hack to get password.js to play nicely with everyauth
-function setupExpress(expressApp) {
+/*function setupExpress(expressApp) {
     return expressApp.engine('html', (function() {
         var cache;
         cache = {};
@@ -95,9 +100,9 @@ function setupExpress(expressApp) {
             }
         };
     })());
-};
+};*/
 
-function setupEveryauth() {
+function setupEveryauth(conf) {
     everyauth.debug = true;
     everyauth.everymodule.findUserById(function(id, callback) {
         // will never be called, can't fetch user from database at this point on the server
@@ -105,8 +110,8 @@ function setupEveryauth() {
         return callback(null, null);
     });
 
-    require('./lib/facebook')(everyauth, request);
-    require('./lib/password')(everyauth, request);
+    require('./lib/facebook')(everyauth, conf, ctx);
+    require('./lib/password')(everyauth, conf, ctx);
 
     everyauth.everymodule.handleLogout(function(req, res) {
         if (req.session.auth && req.session.auth.facebook) {
