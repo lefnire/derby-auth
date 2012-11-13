@@ -1,18 +1,17 @@
 var everyauth = require('everyauth'),
-
-    // We keep these around, but they're set in the middleware function
-    model,
-    req,
-    sess;
+    request = {
+        req:undefined,
+        model:undefined,
+        session:undefined
+    }; // Keep context variables around for ./lib modules as pseudo-closure, they're set in middleware
 
 module.exports.middleware = function(expressApp, store) {
     setupQueries(store);
     setupAccessControl(store);
     setupEveryauth();
-    expressApp.use(function(request, res, next) {
-        req = request;
-        model = req.getModel();
-        sess = model.session;
+    expressApp.use(function(req, res, next) {
+        request.req = req;
+        request.model = req.getModel();
         newUser();
         return next();
     });
@@ -79,6 +78,7 @@ setupAccessControl = function(store) {
  * They get to play around before creating a new account.
  */
 function newUser() {
+    var model = request.model, sess = model.session;
     if (!sess.userId) {
         sess.userId = model.id();
         return model.set("users." + sess.userId, {
@@ -112,88 +112,8 @@ function setupEveryauth() {
         return callback(null, null);
     });
 
-    // Facebook Authentication Logic
-    // -----------------------------
-    everyauth.facebook
-        .appId(process.env.FACEBOOK_KEY)
-        .appSecret(process.env.FACEBOOK_SECRET)
-        .findOrCreateUser(function(session, accessToken, accessTokenExtra, fbUserMetadata) {
-            var q;
-
-            // Put it in the session for later use
-            session.auth || (session.auth = {});
-            session.auth.facebook = fbUserMetadata.id;
-            q = model.query('users').withEveryauth('facebook', fbUserMetadata.id);
-            model.fetch(q, function(err, user) {
-                var id, u;
-                console.log({
-                    err: err,
-                    fbUserMetadata: fbUserMetadata
-                });
-                id = user && (u = user.get()) && u.length > 0 && u[0].id;
-                // # Has user been tied to facebook account already?
-                if (id && id !== session.userId) {
-                    return session.userId = id;
-                // # Else tie user to their facebook account
-                } else {
-                    model.setNull("users." + session.userId + ".auth", {
-                        'facebook': {}
-                    });
-                    return model.set("users." + session.userId + ".auth.facebook", fbUserMetadata);
-                }
-            });
-        return fbUserMetadata;
-    }).redirectPath("/");
-
-    // Login Authentication Logic
-    // -----------------------------
-    everyauth.password
-        .loginWith('email')
-        .getLoginPath('/login')
-        .postLoginPath('/login')
-        .authenticate(function(login, password) {
-            var errors, user;
-            errors = [];
-            if (!login) {
-                errors.push("Missing login");
-            }
-            if (!password) {
-                errors.push("Missing password");
-            }
-            if (errors.length) {
-                return errors;
-            }
-            user = usersByLogin[login];
-            if (!user) {
-                return ["Login failed"];
-            }
-            if (user.password !== password) {
-                return ["Login failed"];
-            }
-            return user;
-        }).getRegisterPath("/register").postRegisterPath("/register").validateRegistration(function(newUserAttrs, errors) {
-            var login, q;
-            login = newUserAttrs.login;
-            q = model.query('users').withEveryauth('password', login);
-            return model.fetch(q, function(err, user) {
-                var u;
-                console.log({
-                    err: err,
-                    user: user
-                });
-                if (user && (u = user.get()) && u.length > 0 && u[0].id) {
-                    errors.push("Login already taken");
-                }
-                return errors;
-            });
-        }).registerUser(function(newUserAttrs) {
-            var login;
-            login = newUserAttrs[this.loginKey()];
-            return model.set("users." + sess.userId + ".auth.password", newUserAttrs);
-        })
-    .loginSuccessRedirect("/")
-    .registerSuccessRedirect("/");
-
+    require('./lib/facebook')(everyauth, request);
+    require('./lib/password')(everyauth, request);
 
     everyauth.everymodule.handleLogout(function(req, res) {
         if (req.session.auth && req.session.auth.facebook) {
