@@ -1,8 +1,7 @@
 var everyauth = require('everyauth'),
     request = {
         req:undefined,
-        model:undefined,
-        session:undefined
+        model:undefined
     }; // Keep context variables around for ./lib modules as pseudo-closure, they're set in middleware
 
 module.exports.middleware = function(expressApp, store) {
@@ -26,13 +25,7 @@ setupQueries = function(store) {
         if (password == null) {
             password = null;
         }
-        console.log({
-            withEveryauth: {
-                provider: provider,
-                id: id,
-                password: password
-            }
-        });
+        if (everyauth.debug) console.log({ withEveryauth: { provider: provider, id: id, password: password } });
         if (password) {
             return this.where("auth." + provider + ".id").equals(id).where("auth." + provider + ".password").equals(password);
         } else {
