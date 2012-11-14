@@ -1,7 +1,7 @@
 var passport = require('passport'),
     LocalStrategy = require('passport-local').Strategy,
+    savedStrageties = {},
     _  = require('lodash'),
-    strategyInstances = {},
     model;
 
 /**
@@ -31,6 +31,7 @@ module.exports.middleware = function(expressApp, store, strategies) {
 
     // Initialize Passport.  Also use passport.session() middleware, to support
     // persistent login sessions (recommended).
+    savedStrategies = strategies; // keep around in module closure for future use by routes()
     setupPassport(strategies);
     expressApp.use(passport.initialize());
     expressApp.use(passport.session());
@@ -77,7 +78,7 @@ module.exports.routes = function(expressApp) {
      */
 
 
-    _.each(strategyInstances, function(strategy, name){
+    _.each(savedStrategies, function(strategy, name){
         // GET /auth/facebook
         //   Use passport.authenticate() as route middleware to authenticate the
         //   request.  The first step in Facebook authentication will involve
@@ -120,7 +121,6 @@ module.exports.routes = function(expressApp) {
 }
 
 function setupPassport(strategies) {
-
     // Passport session setup.
     //   To support persistent login sessions, Passport needs to be able to
     //   serialize users into and deserialize users out of the session.  Typically,
@@ -172,19 +172,24 @@ function setupPassport(strategies) {
         }
     ));
 
-    _.each(strategies, function(arr){
-        var strategyClass = arr[0],
-            conf = arr[1];
+    _.each(strategies, function(obj, name){
+
+        // Provide default values for options not passed in
+        // TODO pass in as conf URL variable
+        _.defaults(obj.conf, {callbackURL: "http://localhost:3000/auth/" + name + "/callback"})
 
         // Use the FacebookStrategy within Passport.
         //   Strategies in Passport require a `verify` function, which accept
         //   credentials (in this case, an accessToken, refreshToken, and Facebook
         //   profile), and invoke a callback with a user object.
-        var strategy = new strategyClass(conf, function(accessToken, refreshToken, profile, done) {
+        passport.use(new obj.strategy(obj.conf, function(accessToken, refreshToken, profile, done) {
                 // asynchronous verification, for effect...
                 process.nextTick(function () {
 
-                    // Put it in the session for later use
+                    // To keep the example simple, the user's Facebook profile is returned to
+                    // represent the logged-in user.  In a typical application, you would want
+                    // to associate the Facebook account with a user record in your database,
+                    // and return that user instead.
                     var q = model.query('users').withEveryauth(profile.provider, profile.id);
                     model.fetch(q, function(err, user) {
                         console.log({ err: err, profile: profile, user: user.get()})
@@ -197,16 +202,8 @@ function setupPassport(strategies) {
                         }
                         return done(null, userObj);
                     });
-
-                    // To keep the example simple, the user's Facebook profile is returned to
-                    // represent the logged-in user.  In a typical application, you would want
-                    // to associate the Facebook account with a user record in your database,
-                    // and return that user instead.
-//                    return done(null, profile);
                 });
             }
-        )
-        passport.use(strategy);
-        strategyInstances[strategy.name] = strategy; // keep around for reference by routes()
+        ));
     });
 };
