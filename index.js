@@ -2,7 +2,7 @@ var passport = require('passport'),
     LocalStrategy = require('passport-local').Strategy,
     savedStrageties = {},
     _  = require('lodash'),
-    model;
+    model, request;
 
 /**
  * Creates middleware which provides authentication for DerbyJS
@@ -14,8 +14,9 @@ module.exports.middleware = function(expressApp, store, strategies) {
     // Setup queries & accessControl
     require('./lib/store')(store);
 
-    // Must come first to set the model
+    // Must be called before passport middleware so they have access to model
     expressApp.use(function(req, res, next) {
+        request = req;
         model = req.getModel();
 
         // New User - They get to play around before creating a new account.
@@ -35,7 +36,7 @@ module.exports.middleware = function(expressApp, store, strategies) {
     setupPassport(strategies);
     expressApp.use(passport.initialize());
     expressApp.use(passport.session());
-    return function(req,res,next){ return next() }
+    return function(req,res,next){next()}
 };
 
 /**
@@ -201,6 +202,8 @@ function setupPassport(strategies) {
                             model.setNull(userPath + '.auth', {});
                             model.set(userPath + '.auth.' + profile.provider, profile);
                             userObj = model.get(userPath);
+                        } else {
+                            model.session.userId = userObj.id;
                         }
                         return done(null, userObj);
                     });
