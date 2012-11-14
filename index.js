@@ -54,26 +54,28 @@ module.exports.routes = function(expressApp) {
         passport.authenticate('local', { failureRedirect: '/login', failureFlash: true }),
         function(req, res) {
             res.redirect('/');
-        });
+        }
+    );
 
     // POST /login
     //   This is an alternative implementation that uses a custom callback to
     //   acheive the same functionality.
     /*
      app.post('/login', function(req, res, next) {
-     passport.authenticate('local', function(err, user, info) {
-     if (err) { return next(err) }
-     if (!user) {
-     req.flash('error', info.message);
-     return res.redirect('/login')
-     }
-     req.logIn(user, function(err) {
-     if (err) { return next(err); }
-     return res.redirect('/users/' + user.username);
-     });
-     })(req, res, next);
+         passport.authenticate('local', function(err, user, info) {
+            if (err) { return next(err) }
+            if (!user) {
+                req.flash('error', info.message);
+                return res.redirect('/login')
+            }
+            req.logIn(user, function(err) {
+            if (err) { return next(err); }
+                return res.redirect('/users/' + user.username);
+            });
+         })(req, res, next);
      });
      */
+
 
     _.each(strategyInstances, function(strategy, name){
         // GET /auth/facebook
@@ -101,17 +103,10 @@ module.exports.routes = function(expressApp) {
     });
 
     expressApp.get('/logout', function(req, res){
+        req.session.userId = undefined;
         req.logout();
         res.redirect('/');
     });
-    //    everyauth.everymodule.handleLogout(function(req, res) {
-    //        if (req.session.auth && req.session.auth.facebook) {
-    //            req.session.auth.facebook = void 0;
-    //        }
-    //        req.session.userId = void 0;
-    //        req.logout(); // The logout method is added for you by everyauth, too
-    //        return this.redirect(res, this.logoutRedirectPath());
-    //    });
 
     // Simple route middleware to ensure user is authenticated.
     //   Use this route middleware on any resource that needs to be protected.  If
@@ -125,29 +120,6 @@ module.exports.routes = function(expressApp) {
 }
 
 function setupPassport(strategies) {
-    var users = [
-        { id: 1, username: 'bob', password: 'secret', email: 'bob@example.com' }
-        , { id: 2, username: 'joe', password: 'birthday', email: 'joe@example.com' }
-    ];
-
-    function findById(id, fn) {
-        var idx = id - 1;
-        if (users[idx]) {
-            fn(null, users[idx]);
-        } else {
-            fn(new Error('User ' + id + ' does not exist'));
-        }
-    }
-
-    function findByUsername(username, fn) {
-        for (var i = 0, len = users.length; i < len; i++) {
-            var user = users[i];
-            if (user.username === username) {
-                return fn(null, user);
-            }
-        }
-        return fn(null, null);
-    }
 
     // Passport session setup.
     //   To support persistent login sessions, Passport needs to be able to
@@ -161,16 +133,13 @@ function setupPassport(strategies) {
     passport.deserializeUser(function(id, done) {
         var q = model.query('users').withId(id);
         model.fetch(q, function(err, user) {
-            console.log({ err: err, user: user })
-            var id, u;
-            id = user && (u = user.get()) && u.length > 0 && u[0].id;
-            if (!id && !err) err = "User not found";
-            return done(err, user.get()[0]);
+            console.log({ err: err, user: user.get() })
+            var userObj, u;
+            userObj = user && (u = user.get()) && u.length > 0 && u[0];
+            if (err) return done(err);
+            if (!id && !err) return done(new Error('User not found'));
+            return done(null, userObj);
         });
-
-//        findById(id, function (err, user) {
-//            done(err, user);
-//        });
     });
 
     // Use the LocalStrategy within Passport.
@@ -187,12 +156,15 @@ function setupPassport(strategies) {
                 // username, or the password is not correct, set the user to `false` to
                 // indicate failure and set a flash message.  Otherwise, return the
                 // authenticated `user`.
-                findByUsername(username, function(err, user) {
-                    if (err) { return done(err); }
-                    if (!user) { return done(null, false, { message: 'Unknown user ' + username }); }
-                    if (user.password != password) { return done(null, false, { message: 'Invalid password' }); }
-                    return done(null, user);
-                })
+                var q = model.query('users').withLogin(username, password);
+                return model.fetch(q, function(err, user) {
+                    console.log({ err: err, user: user.get() })
+                    var userObj, u;
+                    userObj = user && (u = user.get()) && u.length > 0 && u[0];
+                    if (err) return done(err);
+                    if (!userObj) return done(null, false, { message: 'Invalid login' });
+                    return done(null, userObj);
+                });
             });
         }
     ));
@@ -212,15 +184,15 @@ function setupPassport(strategies) {
                     // Put it in the session for later use
                     var q = model.query('users').withEveryauth(profile.provider, profile.id);
                     model.fetch(q, function(err, user) {
-                        console.log({ err: err, profile: profile })
-                        var id, u;
-                        id = user && (u = user.get()) && u.length > 0 && u[0].id;
+                        console.log({ err: err, profile: profile, user: user.get()})
+                        var userObj, u;
+                        userObj = user && (u = user.get()) && u.length > 0 && u[0];
                         // # Has user been tied to facebook account already?
-                        if (!id) {
+                        if (!userObj) {
                             model.setNull("users." + model.session.userId + ".auth", {});
                             model.set("users." + model.session.userId + ".auth." + profile.provider, profile);
                         }
-                        return done(null, user.get()[0]);
+                        return done(null, userObj);
                     });
 
                     // To keep the example simple, the user's Facebook profile is returned to
