@@ -1,6 +1,6 @@
 # Derby.js Authentication
 
-Provides authentication middleware (using [Passport](http://passportjs.org/)) for use in your Derby projects. For usage details, see [lefnire/derby-examples/authentication](https://github.com/lefnire/derby-examples/tree/master/authentication); specifically, [server/index.js](https://github.com/lefnire/derby-examples/blob/master/authentication/src/server/index.coffee).
+Provides authentication middleware (using [Passport](http://passportjs.org/)) for use in your Derby projects. For usage details, see [example](https://github.com/lefnire/derby-auth/tree/master/example).
 
 ## Why not EveryAuth?
 This project was originally implemented with Everyauth ([see branch](https://github.com/lefnire/derby-auth/tree/everyauth)), but had some issues:
