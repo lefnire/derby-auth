@@ -1,2 +1,7 @@
 node_modules
 npm-debug.log
+
+example/lib
+gen
+*.swp
+*.un~
