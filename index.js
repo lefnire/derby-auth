@@ -190,16 +190,17 @@ function setupPassport(strategies) {
                     // represent the logged-in user.  In a typical application, you would want
                     // to associate the Facebook account with a user record in your database,
                     // and return that user instead.
-                    var q = model.query('users').withEveryauth(profile.provider, profile.id);
+                    var q = model.query('users').withProvider(profile.provider, profile.id);
                     model.fetch(q, function(err, user) {
                         console.log({ err: err, profile: profile, user: user.get()})
                         var userObj, u;
                         userObj = user && (u = user.get()) && u.length > 0 && u[0];
                         // # Has user been tied to facebook account already?
                         if (!userObj) {
-                            model.setNull("users." + model.session.userId + ".auth", {});
-                            model.set("users." + model.session.userId + ".auth." + profile.provider, profile);
-                            userObj = profile;
+                            var userPath = "users." + model.session.userId;
+                            model.setNull(userPath + '.auth', {});
+                            model.set(userPath + '.auth.' + profile.provider, profile);
+                            userObj = model.get(userPath);
                         }
                         return done(null, userObj);
                     });
