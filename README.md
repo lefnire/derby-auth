@@ -1,5 +1,8 @@
 # Derby.js Authentication
 
-Provides authentication middleware for use in your Derby projects. Currently supports Facebook, LinkedIn, and Github integration; but more integration is on the way. Please do scratch your own itch with other Everyauth implementations and provide pull requests. See [Everyauth's sample code](https://github.com/bnoguchi/everyauth/tree/express3/example) for details. For usage details, see [lefnire/derby-examples/authentication](https://github.com/lefnire/derby-examples/blob/master/authentication); specifically, [server/index.js](https://github.com/lefnire/derby-examples/blob/master/authentication/src/server/index.coffee).
+Provides authentication middleware (using [Passport](http://passportjs.org/)) for use in your Derby projects. For usage details, see [lefnire/derby-examples/authentication](https://github.com/lefnire/derby-examples/tree/master/authentication); specifically, [server/index.js](https://github.com/lefnire/derby-examples/blob/master/authentication/src/server/index.coffee).
 
-Note: currently uses [Everyauth](https://github.com/bnoguchi/everyauth/tree/express3), which is incompatible with password-authentication (see [this issue](https://groups.google.com/d/msg/derbyjs/JuUqUNd9Rls/MgHOXuYwDMgJ)); therefore, derby-auth will likely be moving to Passport in the near future.
+## Why not EveryAuth?
+This project was originally implemented with Everyauth ([see branch](https://github.com/lefnire/derby-auth/tree/everyauth)), but had some issues:
+  1. Every provider had to be implemented individually in code. Passport has an abstraction layer, which is what allows us to pass in Strategy + conf objects in server/index.js for every provider we want enabled.
+  2. Password authentication posed technical difficulties. See the [Google Group discussion](https://groups.google.com/forum/?fromgroups=#!topic/derbyjs/JuUqUNd9Rls)
