@@ -22,8 +22,7 @@ module.exports.middleware = function(expressApp, store, strategies) {
     expressApp.use(function(req, res, next) {
         model = req.getModel();
 
-        var flashResults = req.flash('error');
-        if (flashResults) model.set('_errors', flashResults);
+        model.set('_flash', req.flash()); // set any error / success messages
 
         // New User - They get to play around before creating a new account.
         var sess = model.session;
