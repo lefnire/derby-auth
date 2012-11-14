@@ -29,7 +29,7 @@ module.exports.middleware = function(expressApp, store, strategies) {
         return next();
     });
 
-    // Initialize Passport!  Also use passport.session() middleware, to support
+    // Initialize Passport.  Also use passport.session() middleware, to support
     // persistent login sessions (recommended).
     setupPassport(strategies);
     expressApp.use(passport.initialize());
@@ -163,6 +163,9 @@ function setupPassport(strategies) {
                     userObj = user && (u = user.get()) && u.length > 0 && u[0];
                     if (err) return done(err);
                     if (!userObj) return done(null, false, { message: 'Invalid login' });
+
+                    // Success
+                    model.session.userId = userObj.id;
                     return done(null, userObj);
                 });
             });
