@@ -199,6 +199,7 @@ function setupPassport(strategies) {
                         if (!userObj) {
                             model.setNull("users." + model.session.userId + ".auth", {});
                             model.set("users." + model.session.userId + ".auth." + profile.provider, profile);
+                            userObj = profile;
                         }
                         return done(null, userObj);
                     });
