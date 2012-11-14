@@ -1,8 +1,10 @@
 var passport = require('passport'),
     LocalStrategy = require('passport-local').Strategy,
+    flash = require('connect-flash'), // used for setting error messages
     savedStrageties = {},
     _  = require('lodash'),
-    model, request;
+    model,
+    failureRedirect = '/'; // normally '/login', TODO this should be passed in as config
 
 /**
  * Creates middleware which provides authentication for DerbyJS
@@ -14,10 +16,14 @@ module.exports.middleware = function(expressApp, store, strategies) {
     // Setup queries & accessControl
     require('./lib/store')(store);
 
+    expressApp.use(flash());
+
     // Must be called before passport middleware so they have access to model
     expressApp.use(function(req, res, next) {
-        request = req;
         model = req.getModel();
+
+        var flashResults = req.flash('error');
+        if (flashResults) model.set('_errors', flashResults);
 
         // New User - They get to play around before creating a new account.
         var sess = model.session;
@@ -53,7 +59,7 @@ module.exports.routes = function(expressApp) {
     //
     //   curl -v -d "username=bob&password=secret" http://127.0.0.1:3000/login
     expressApp.post('/login',
-        passport.authenticate('local', { failureRedirect: '/login', failureFlash: true }),
+        passport.authenticate('local', { failureRedirect: failureRedirect, failureFlash: true }),
         function(req, res) {
             res.redirect('/');
         }
@@ -91,7 +97,7 @@ module.exports.routes = function(expressApp) {
             var userObj = getUserObj(users, {err: err});
             if (userObj) {
                 // user already registered with that name, TODO send error message
-                return res.redirect('/login');
+                return res.redirect(failureRedirect);
             } else {
                 // Legit, register
                 model.set('users.' + model.session.userId + '.auth.local', req.body);
@@ -119,7 +125,7 @@ module.exports.routes = function(expressApp) {
         //   login page.  Otherwise, the primary route function function will be called,
         //   which, in this example, will redirect the user to the home page.
         expressApp.get('/auth/' + name + '/callback',
-            passport.authenticate(name, { failureRedirect: '/login' }),
+            passport.authenticate(name, { failureRedirect: failureRedirect }),
             function(req, res) {
                 res.redirect('/');
             });

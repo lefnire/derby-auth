@@ -28,9 +28,9 @@
         "lib": "lib"
     },
     "dependencies": {
-        "everyauth": "git://github.com/lefnire/everyauth#express3",
         "passport": "*",
         "passport-local": "*",
+        "connect-flash": "*",
         "lodash": "*"
     }
 }
