@@ -14,13 +14,8 @@ module.exports.middleware = function(expressApp, store, strategies) {
     // Setup queries & accessControl
     require('./lib/store')(store);
 
-    // Initialize Passport!  Also use passport.session() middleware, to support
-    // persistent login sessions (recommended).
-    setupPassport(strategies);
-    expressApp.use(passport.initialize());
-    expressApp.use(passport.session());
-
-    return function(req, res, next) {
+    // Must come first to set the model
+    expressApp.use(function(req, res, next) {
         model = req.getModel();
 
         // New User - They get to play around before creating a new account.
@@ -32,7 +27,14 @@ module.exports.middleware = function(expressApp, store, strategies) {
             });
         }
         return next();
-    };
+    });
+
+    // Initialize Passport!  Also use passport.session() middleware, to support
+    // persistent login sessions (recommended).
+    setupPassport(strategies);
+    expressApp.use(passport.initialize());
+    expressApp.use(passport.session());
+    return function(req,res,next){ return next() }
 };
 
 /**
@@ -157,9 +159,18 @@ function setupPassport(strategies) {
     });
 
     passport.deserializeUser(function(id, done) {
-        findById(id, function (err, user) {
-            done(err, user);
+        var q = model.query('users').withId(id);
+        model.fetch(q, function(err, user) {
+            console.log({ err: err, user: user })
+            var id, u;
+            id = user && (u = user.get()) && u.length > 0 && u[0].id;
+            if (!id && !err) err = "User not found";
+            return done(err, user.get()[0]);
         });
+
+//        findById(id, function (err, user) {
+//            done(err, user);
+//        });
     });
 
     // Use the LocalStrategy within Passport.
@@ -198,11 +209,25 @@ function setupPassport(strategies) {
                 // asynchronous verification, for effect...
                 process.nextTick(function () {
 
+                    // Put it in the session for later use
+                    var q = model.query('users').withEveryauth(profile.provider, profile.id);
+                    model.fetch(q, function(err, user) {
+                        console.log({ err: err, profile: profile })
+                        var id, u;
+                        id = user && (u = user.get()) && u.length > 0 && u[0].id;
+                        // # Has user been tied to facebook account already?
+                        if (!id) {
+                            model.setNull("users." + model.session.userId + ".auth", {});
+                            model.set("users." + model.session.userId + ".auth." + profile.provider, profile);
+                        }
+                        return done(null, user.get()[0]);
+                    });
+
                     // To keep the example simple, the user's Facebook profile is returned to
                     // represent the logged-in user.  In a typical application, you would want
                     // to associate the Facebook account with a user record in your database,
                     // and return that user instead.
-                    return done(null, profile);
+//                    return done(null, profile);
                 });
             }
         )
