@@ -8,7 +8,7 @@ var passport = require('passport'),
  * Creates middleware which provides authentication for DerbyJS
  * @param expressApp
  * @param {store} Racer store, used for configuring queries and accessControl
- * @param {conf} Authentication keys - see node_modules/everyauth/example.conf.js for format
+ * @param {strategies} A hash of strategy objects and their configurations. See https://github.com/lefnire/derby-examples/blob/master/authentication/src/server/index.coffee
  */
 module.exports.middleware = function(expressApp, store, strategies) {
     // Setup queries & accessControl
@@ -78,6 +78,27 @@ module.exports.routes = function(expressApp) {
      });
      */
 
+    expressApp.post('/register', function(req, res){
+        model = req.getModel();
+
+        // if user already registered, return
+        if (model.get('users.' + model.session.userId + '.auth.local')) {
+            return res.redirect('/');
+        }
+
+        var q = model.query('users').withUsername(req.body.username);
+        model.fetch(q, function(err, users){
+            var userObj = getUserObj(users, {err: err});
+            if (userObj) {
+                // user already registered with that name, TODO send error message
+                return res.redirect('/login');
+            } else {
+                // Legit, register
+                model.set('users.' + model.session.userId + '.auth.local', req.body);
+                return res.redirect('/');
+            }
+        });
+    });
 
     _.each(savedStrategies, function(strategy, name){
         // GET /auth/facebook
@@ -133,12 +154,10 @@ function setupPassport(strategies) {
 
     passport.deserializeUser(function(id, done) {
         var q = model.query('users').withId(id);
-        model.fetch(q, function(err, user) {
-            console.log({ err: err, user: user.get() })
-            var userObj, u;
-            userObj = user && (u = user.get()) && u.length > 0 && u[0];
+        model.fetch(q, function(err, users) {
+            var userObj = getUserObj(users, {err: err});
             if (err) return done(err);
-            if (!id && !err) return done(new Error('User not found'));
+            if (!userObj && !err) return done(new Error('User not found'));
             return done(null, userObj);
         });
     });
@@ -158,10 +177,8 @@ function setupPassport(strategies) {
                 // indicate failure and set a flash message.  Otherwise, return the
                 // authenticated `user`.
                 var q = model.query('users').withLogin(username, password);
-                return model.fetch(q, function(err, user) {
-                    console.log({ err: err, user: user.get() })
-                    var userObj, u;
-                    userObj = user && (u = user.get()) && u.length > 0 && u[0];
+                return model.fetch(q, function(err, users) {
+                    var userObj = getUserObj(users, {err: err});
                     if (err) return done(err);
                     if (!userObj) return done(null, false, { message: 'Invalid login' });
 
@@ -192,10 +209,8 @@ function setupPassport(strategies) {
                     // to associate the Facebook account with a user record in your database,
                     // and return that user instead.
                     var q = model.query('users').withProvider(profile.provider, profile.id);
-                    model.fetch(q, function(err, user) {
-                        console.log({ err: err, profile: profile, user: user.get()})
-                        var userObj, u;
-                        userObj = user && (u = user.get()) && u.length > 0 && u[0];
+                    model.fetch(q, function(err, users) {
+                        var userObj = getUserObj(users, {err: err, profile: profile});
                         // # Has user been tied to facebook account already?
                         if (!userObj) {
                             var userPath = "users." + model.session.userId;
@@ -212,3 +227,16 @@ function setupPassport(strategies) {
         ));
     });
 };
+
+/**
+ * Util function, parses user query result and optionally console.logs() a second param
+ */
+function getUserObj(users, logObj){
+    var userObj, u;
+    userObj = users && (u = users.get()) && u.length > 0 && u[0];
+    if (logObj) {
+        _.defaults(logObj, {userObj:userObj});
+        console.log(logObj);
+    }
+    return userObj;
+}
