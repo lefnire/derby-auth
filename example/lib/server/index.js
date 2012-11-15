@@ -51,7 +51,8 @@ var
         strategy: require('passport-github').Strategy,
         conf: {
           clientID: process.env.GITHUB_CLIENT_ID || authKeys.github.appId,
-          clientSecret: process.env.GITHUB_CLIENT_SECRET || authKeys.github.appSecret
+          clientSecret: process.env.GITHUB_CLIENT_SECRET || authKeys.github.appSecret,
+          callbackURL: "http://127.0.0.1:3000/auth/github/callback"
         }
       },
       twitter: {

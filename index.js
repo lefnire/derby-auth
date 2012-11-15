@@ -5,11 +5,11 @@ var passport = require('passport')
 
   // Closure variables kept around after initialization
   // prefix with underscores so we know we're referencing closure variables, and we don't clobber locally passed vars
-  // (I don't know what common convention is here)
+  // Note: _model is not kept up here. model should be requested per instance in middleware, else everyone is using the same instance
   , _strategies
   , _expressApp
   , _options
-  , _model
+  ;
 
 /**
  * @param {expressApp}
@@ -29,40 +29,128 @@ module.exports.init = function(expressApp, store, strategies, options) {
         schema: {},
         allowPurl: false
     });
-
     require('./lib/store')(store); // Setup queries & accessControl
-    setupPassport();
 }
 
 /**
  * Creates middleware which provides authentication for DerbyJS
  */
 module.exports.middleware = function() {
+    var model;
 
     _expressApp.use(flash());
 
     // Must be called before passport middleware so they have access to model
     _expressApp.use(function(req, res, next) {
-        _model = req.getModel();
-        var sess = _model.session;
+        model = req.getModel(),
+            sess = model.session;
 
-        _model.set('_flash', req.flash()); // set any error / success messages
+        // set any error / success messages
+        model.set('_flash', req.flash());
 
         // New User - They get to play around before creating a new account.
         if (!sess.userId) {
-            sess.userId = _model.id();
+            sess.userId = model.id();
             _.defaults(_options.schema, {auth:{}}); // make sure user schema is defaulted with at least {auth:{}}
-            _model.set("users." + sess.userId, _options.schema);
+            model.set("users." + sess.userId, _options.schema);
         }
 
         return next();
     });
 
+    (function setupPassport() {
+
+        // Passport session setup.
+        //   To support persistent login sessions, Passport needs to be able to
+        //   serialize users into and deserialize users out of the session.  Typically,
+        //   this will be as simple as storing the user ID when serializing, and finding
+        //   the user by ID when deserializing.
+        passport.serializeUser(function(user, done) {
+            done(null, user.id);
+        });
+
+        passport.deserializeUser(function(id, done) {
+            var q = model.query('users').withId(id);
+            model.fetch(q, function(err, users) {
+                var userObj = getUserObj(users, {err: err});
+                if (err) return done(err);
+                if (!userObj && !err) return done(new Error('User not found'));
+                model.session.loggedIn = !_.isEmpty(userObj.auth);
+                return done(null, userObj);
+            });
+        });
+
+        // Use the LocalStrategy within Passport.
+        //   Strategies in passport require a `verify` function, which accept
+        //   credentials (in this case, a username and password), and invoke a callback
+        //   with a user object.  In the real world, this would query a database;
+        //   however, in this example we are using a baked-in set of users.
+        passport.use(new LocalStrategy(
+            function(username, password, done) {
+                // asynchronous verification, for effect...
+                process.nextTick(function () {
+
+                    // Find the user by username.  If there is no user with the given
+                    // username, or the password is not correct, set the user to `false` to
+                    // indicate failure and set a flash message.  Otherwise, return the
+                    // authenticated `user`.
+                    var q = model.query('users').withLogin(username, password);
+                    return model.fetch(q, function(err, users) {
+                        var userObj = getUserObj(users, {err: err});
+                        if (err) return done(err);
+                        if (!userObj) return done(null, false, { message: 'Invalid login' });
+
+                        // Success
+                        model.session.userId = userObj.id;
+                        return done(null, userObj);
+                    });
+                });
+            }
+        ));
+
+        _.each(_strategies, function(obj, name){
+
+            // Provide default values for options not passed in
+            // TODO pass in as conf URL variable
+            _.defaults(obj.conf, {callbackURL: _options.domain + "/auth/" + name + "/callback"})
+
+            // Use the FacebookStrategy within Passport.
+            //   Strategies in Passport require a `verify` function, which accept
+            //   credentials (in this case, an accessToken, refreshToken, and Facebook
+            //   profile), and invoke a callback with a user object.
+            passport.use(new obj.strategy(obj.conf, function(accessToken, refreshToken, profile, done) {
+                    // asynchronous verification, for effect...
+                    process.nextTick(function () {
+
+                        // To keep the example simple, the user's Facebook profile is returned to
+                        // represent the logged-in user.  In a typical application, you would want
+                        // to associate the Facebook account with a user record in your database,
+                        // and return that user instead.
+                        var q = model.query('users').withProvider(profile.provider, profile.id);
+                        model.fetch(q, function(err, users) {
+                            var userObj = getUserObj(users, {err: err, profile: profile});
+                            // # Has user been tied to facebook account already?
+                            if (!userObj) {
+                                var userPath = "users." + model.session.userId;
+                                model.setNull(userPath + '.auth', {});
+                                model.set(userPath + '.auth.' + profile.provider, profile);
+                                userObj = model.get(userPath);
+                            } else {
+                                model.session.userId = userObj.id;
+                            }
+                            return done(null, userObj);
+                        });
+                    });
+                }
+            ));
+        });
+    })();
+
     // Initialize Passport.  Also use passport.session() middleware, to support
     // persistent login sessions (recommended).
     _expressApp.use(passport.initialize());
     _expressApp.use(passport.session());
-    return function(req,res,next){return next()}
+    return function(req,res,next){ return next(); };
 };
 
 /**
@@ -123,21 +211,22 @@ module.exports.routes = function() {
      */
 
     _expressApp.post('/register', function(req, res){
+        var model = req.getModel();
 
         // if user already registered, return
-        if (_model.get('users.' + _model.session.userId + '.auth.local')) {
+        if (model.get('users.' + model.session.userId + '.auth.local')) {
             return res.redirect('/');
         }
 
-        var q = _model.query('users').withUsername(req.body.username);
-        _model.fetch(q, function(err, users){
+        var q = model.query('users').withUsername(req.body.username);
+        model.fetch(q, function(err, users){
             var userObj = getUserObj(users, {err: err});
             if (userObj) {
                 // user already registered with that name, TODO send error message
                 return res.redirect(_options.failureRedirect);
             } else {
                 // Legit, register
-                _model.set('users.' + _model.session.userId + '.auth.local', req.body);
+                model.set('users.' + model.session.userId + '.auth.local', req.body);
                 return res.redirect('/');
             }
         });
@@ -185,94 +274,6 @@ module.exports.routes = function() {
     //        res.redirect('/login')
     //    }
 }
-
-function setupPassport() {
-
-    // Passport session setup.
-    //   To support persistent login sessions, Passport needs to be able to
-    //   serialize users into and deserialize users out of the session.  Typically,
-    //   this will be as simple as storing the user ID when serializing, and finding
-    //   the user by ID when deserializing.
-    passport.serializeUser(function(user, done) {
-        done(null, user.id);
-    });
-
-    passport.deserializeUser(function(id, done) {
-        var q = _model.query('users').withId(id);
-        _model.fetch(q, function(err, users) {
-            var userObj = getUserObj(users, {err: err});
-            if (err) return done(err);
-            if (!userObj && !err) return done(new Error('User not found'));
-            _model.session.loggedIn = !_.isEmpty(userObj.auth);
-            return done(null, userObj);
-        });
-    });
-
-    // Use the LocalStrategy within Passport.
-    //   Strategies in passport require a `verify` function, which accept
-    //   credentials (in this case, a username and password), and invoke a callback
-    //   with a user object.  In the real world, this would query a database;
-    //   however, in this example we are using a baked-in set of users.
-    passport.use(new LocalStrategy(
-        function(username, password, done) {
-            // asynchronous verification, for effect...
-            process.nextTick(function () {
-
-                // Find the user by username.  If there is no user with the given
-                // username, or the password is not correct, set the user to `false` to
-                // indicate failure and set a flash message.  Otherwise, return the
-                // authenticated `user`.
-                var q = _model.query('users').withLogin(username, password);
-                return _model.fetch(q, function(err, users) {
-                    var userObj = getUserObj(users, {err: err});
-                    if (err) return done(err);
-                    if (!userObj) return done(null, false, { message: 'Invalid login' });
-
-                    // Success
-                    _model.session.userId = userObj.id;
-                    return done(null, userObj);
-                });
-            });
-        }
-    ));
-
-    _.each(_strategies, function(obj, name){
-
-        // Provide default values for options not passed in
-        // TODO pass in as conf URL variable
-        _.defaults(obj.conf, {callbackURL: _options.domain + "/auth/" + name + "/callback"})
-
-        // Use the FacebookStrategy within Passport.
-        //   Strategies in Passport require a `verify` function, which accept
-        //   credentials (in this case, an accessToken, refreshToken, and Facebook
-        //   profile), and invoke a callback with a user object.
-        passport.use(new obj.strategy(obj.conf, function(accessToken, refreshToken, profile, done) {
-                // asynchronous verification, for effect...
-                process.nextTick(function () {
-
-                    // To keep the example simple, the user's Facebook profile is returned to
-                    // represent the logged-in user.  In a typical application, you would want
-                    // to associate the Facebook account with a user record in your database,
-                    // and return that user instead.
-                    var q = _model.query('users').withProvider(profile.provider, profile.id);
-                    _model.fetch(q, function(err, users) {
-                        var userObj = getUserObj(users, {err: err, profile: profile});
-                        // # Has user been tied to facebook account already?
-                        if (!userObj) {
-                            var userPath = "users." + _model.session.userId;
-                            _model.setNull(userPath + '.auth', {});
-                            _model.set(userPath + '.auth.' + profile.provider, profile);
-                            userObj = _model.get(userPath);
-                        } else {
-                            _model.session.userId = userObj.id;
-                        }
-                        return done(null, userObj);
-                    });
-                });
-            }
-        ));
-    });
-};
 
 /**
  * Util function, parses user query result and optionally console.logs() a second param
