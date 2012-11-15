@@ -19,7 +19,7 @@ var
     // Pass in options. Domain defaults to localhost:3000, but consider it required
     // (It's a Passport technicality, if anyone has suggestions for determining domain on run-time, please message me)
     options = {
-        domain: (process.env.NODE_ENV==='production ? "http://my.com" : "http://localhost:3000" )
+        domain: (process.env.NODE_ENV==='production' ? "http://my.com" : "http://localhost:3000" )
     }
 
 // Init. {expressApp} sets up routes, {store} sets up accessControl & queries
@@ -34,7 +34,7 @@ Use derby-auth's middleware
 .use(app.router())
 ```
 ###Step 3
-User derby-auth's routes
+Use derby-auth's routes
 ```javascript
 auth.routes();
 ```
