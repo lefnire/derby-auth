@@ -60,7 +60,7 @@ module.exports.middleware = function() {
         // Workflowy uses this method, for example
         var uidParam = req.url.split('/')[1]
           , acceptableUid = require('guid').isGuid(uidParam)
-        if (acceptableUid && (sess.userId !== uidParam) && !sess.loggedIn) {
+        if (_options.allowPurl && acceptableUid && (sess.userId !== uidParam) && !sess.loggedIn) {
             // TODO check if in database - issue with accessControl which is on current uid?
             sess.userId = uidParam;
         }
