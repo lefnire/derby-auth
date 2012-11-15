@@ -76,17 +76,17 @@ module.exports.routes = function() {
     // tests if UUID was used (bookmarked private url), and restores that session
     // Workflowy uses this method, for example
     _expressApp.get('/users/:uid', function(req, res, next) {
+        if (!_options.allowPurl) return next();
+
         var uid = req.params.uid,
-            acceptableUid = (require('guid').isGuid(uid)),
             sess = req.getModel().session;
-        console.log({uid:uid, acceptableUid:acceptableUid});
-        if (_options.allowPurl && acceptableUid && (sess.userId !== uid) && !sess.loggedIn) {
+
+        // if not already logged in , and is legit uid
+        if ((sess.userId !== uid) && !sess.loggedIn && (require('guid').isGuid(uid))) {
             // TODO check if in database - issue with accessControl which is on current uid
             sess.userId = uid;
-            return res.redirect('/');
-        } else {
-            return next();
         }
+        return res.redirect('/');
     });
 
     // POST /login
