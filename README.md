@@ -23,7 +23,7 @@ var
     }
 
 // Init. {expressApp} sets up routes, {store} sets up accessControl & queries
-derbyAuth.init(expressApp, store, strategies, options);
+auth.init(expressApp, store, strategies, options);
 ```
 ###Step 2
 Use derby-auth's middleware
