@@ -23,7 +23,12 @@ module.exports.init = function(expressApp, store, strategies, options) {
     _strategies = strategies;
     _options = options;
 
-    _.defaults(_options, {failureRedirect: '/', domain: "http://localhost:3000"})
+    _.defaults(_options, {
+        failureRedirect: '/',
+        domain: "http://localhost:3000",
+        schema: {},
+        allowPurl: false
+    });
 
     require('./lib/store')(store); // Setup queries & accessControl
     setupPassport();
@@ -39,17 +44,27 @@ module.exports.middleware = function() {
     // Must be called before passport middleware so they have access to model
     _expressApp.use(function(req, res, next) {
         _model = req.getModel();
+        var sess = _model.session;
 
         _model.set('_flash', req.flash()); // set any error / success messages
 
         // New User - They get to play around before creating a new account.
-        var sess = _model.session;
         if (!sess.userId) {
             sess.userId = _model.id();
-            _model.set("users." + sess.userId, {
-                auth: {}
-            });
+            _.defaults(_options.schema, {auth:{}}); // make sure user schema is defaulted with at least {auth:{}}
+            _model.set("users." + sess.userId, _options.schema);
         }
+
+        // Persistent URLs (PURLs) (eg, http://localhost/{guid})
+        // tests if UUID was used (bookmarked private url), and restores that session
+        // Workflowy uses this method, for example
+        var uidParam = req.url.split('/')[1]
+          , acceptableUid = require('guid').isGuid(uidParam)
+        if (acceptableUid && (sess.userId !== uidParam) && _.isEmpty(_model.get("users." + sess.userId + ".auth"))) {
+            // TODO check if in database - issue with accessControl which is on current uid?
+            sess.userId = uidParam;
+        }
+
         return next();
     });
 
