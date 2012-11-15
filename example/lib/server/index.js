@@ -6,16 +6,14 @@ var http = require('http')
   , app = require('../auth')
   , serverError = require('./serverError')
   , MongoStore = require('connect-mongo')(express)
+  , dbUri = 'mongodb://localhost/derby-auth'
 
 var expressApp = express(),
     server = http.createServer(expressApp)
 
 derby.use(require('racer-db-mongo'));
 var store = derby.createStore({
-  db: {
-    type: 'Mongo',
-    uri: 'mongodb://localhost/derby-auth'
-  },
+  db: { type: 'Mongo', uri: dbUri },
   listen: server
 });
 
@@ -26,8 +24,8 @@ var ONE_YEAR = 1000 * 60 * 60 * 24 * 365
     , publicPath = path.join(root, 'public')
 
 /**
- * Derby Auth Setup
- * (1) Setup a hash of strategies you'll use - strategy objects and their configurations
+ * (1)
+ * Setup a hash of strategies you'll use - strategy objects and their configurations
  * Note, API keys should be stored as environment variables (eg, process.env.FACEBOOK_KEY, process.env.FACEBOOK_SECRET)
  * rather than a configuration file. We're storing it in conf.js for demo purposes.
  */
@@ -75,14 +73,14 @@ expressApp
     .use(store.sessionMiddleware({
         secret: process.env.SESSION_SECRET || 'YOUR SECRET HERE',
         cookie: {maxAge: ONE_YEAR},
-        store: new MongoStore({ url: 'mongodb://localhost/derby-auth' })
+        store: new MongoStore({ url: dbUri })
     }))
     .use(store.modelMiddleware())
 
     /**
-     * Middelware can be inserted after the modelMiddleware and before
-     * the app router to pass server accessible data to a model
-     * (2) For derby-auth, We pass in {expressApp} (to setup routes), store(to setup accessControl & queries), and
+     * (2)
+     * Middelware can be inserted after the modelMiddleware and before the app router to pass server accessible data to a model
+     * For derby-auth, We pass in {expressApp} (to setup routes), store(to setup accessControl & queries), and
      * our strategy objects and their configurations (see above)
      */
     .use(derbyAuth.middleware(expressApp, store, strategies))
@@ -92,7 +90,8 @@ expressApp
 );
 
 /**
- * (3) Additionally, Passport needs static routes for some auth setup, so we set that up here.
+ * (3)
+ * Additionally, Passport needs static routes for some auth setup, so we set that up here.
  */
 derbyAuth.routes(expressApp);
 

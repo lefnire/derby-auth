@@ -1,10 +1,10 @@
-var passport = require('passport'),
-    LocalStrategy = require('passport-local').Strategy,
-    flash = require('connect-flash'), // used for setting error messages
-    savedStrageties = {},
-    _  = require('lodash'),
-    model,
-    failureRedirect = '/'; // normally '/login', TODO this should be passed in as config
+var passport = require('passport')
+  , LocalStrategy = require('passport-local').Strategy
+  , flash = require('connect-flash') // used for setting error messages
+  , savedStrageties = {}
+  , _  = require('lodash')
+  , model
+  , failureRedirect = '/' // normally '/login', TODO this should be passed in as config
 
 /**
  * Creates middleware which provides authentication for DerbyJS
