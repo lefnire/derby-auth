@@ -6,6 +6,8 @@ Provides authentication middleware (using [Passport](http://passportjs.org/)) fo
 Initialize derby-auth above `expressApp.use()` directives.
 ```javascript
 var
+    auth = require('derby-auth'),
+
     // Pass in actual Passport Strategy objects as well as their configurations (see http://passportjs.org/guide/facebook/)
     // Note: this means you'd need "passport-facebook" in your package.json file
     strategies = {
@@ -14,9 +16,8 @@ var
         conf: { clientID: process.env.FACEBOOK_KEY, clientSecret: process.env.FACEBOOK_SECRET }
     },
 
-    auth = require('derby-auth'),
-
-    // Pass in options. Domain defaults to localhost:3000, but consider this required - you'll probably test something
+    // Pass in options. Domain defaults to localhost:3000, but consider it required
+    // (It's a Passport technicality, if anyone has suggestions for determining domain on run-time, please message me)
     options = {
         domain: (process.env.NODE_ENV==='production ? "http://my.com" : "http://localhost:3000" )
     }
@@ -28,14 +29,14 @@ derbyAuth.init(expressApp, store, strategies, options);
 Use derby-auth's middleware
 ```javascript
 .use(store.modelMiddleware())
-// derbyAuth.middleware is inserted after modelMiddleware and before the app router to pass server accessible data to a model
-.use(derbyAuth.middleware())
+// derby-auth.middleware is inserted after modelMiddleware and before the app router to pass server accessible data to a model
+.use(auth.middleware())
 .use(app.router())
 ```
 ###Step 3
 User derby-auth's routes
 ```javascript
-derbyAuth.routes();
+auth.routes();
 ```
 
 See the [example](https://github.com/lefnire/derby-auth/tree/master/example) for more details, as well as login / registration forms, sign-in buttons, etc.
