@@ -1,7 +1,7 @@
 var passport = require('passport')
   , LocalStrategy = require('passport-local').Strategy
   , flash = require('connect-flash') // used for setting error messages
-  , _  = require('lodash')
+  , _  = require('underscore')
 
   // Closure variables kept around after initialization
   // prefix with underscores so we know we're referencing closure variables, and we don't clobber locally passed vars
