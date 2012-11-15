@@ -71,7 +71,7 @@ var
     // optional parameters passed into derby-auth.init, domain is required due to some Passport technicalities,
     // allowPurl lets people access non-authenticated accounts at /:uuid, and schema sets up default user
     // account schema structures
-  , options = { domain: 'http://localhost:3000', allowPurl: true, schema: {}, failureRedirect: '/' }
+  , options = { domain: 'http://localhost:3000' }
   ;
 
 // Pass in {expressApp} (required, sets up routes), {store} (required, sets up accessControl & queries), {strategies}
