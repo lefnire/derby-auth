@@ -60,7 +60,7 @@ module.exports.middleware = function() {
         // Workflowy uses this method, for example
         var uidParam = req.url.split('/')[1]
           , acceptableUid = require('guid').isGuid(uidParam)
-        if (acceptableUid && (sess.userId !== uidParam) && _.isEmpty(_model.get("users." + sess.userId + ".auth"))) {
+        if (acceptableUid && (sess.userId !== uidParam) && !sess.loggedIn) {
             // TODO check if in database - issue with accessControl which is on current uid?
             sess.userId = uidParam;
         }
@@ -163,6 +163,7 @@ module.exports.routes = function() {
 
     _expressApp.get('/logout', function(req, res){
         req.session.userId = undefined;
+        req.session.loggedIn = false;
         req.logout();
         res.redirect('/');
     });
@@ -195,6 +196,7 @@ function setupPassport() {
             var userObj = getUserObj(users, {err: err});
             if (err) return done(err);
             if (!userObj && !err) return done(new Error('User not found'));
+            _model.session.loggedIn = !_.isEmpty(userObj.auth);
             return done(null, userObj);
         });
     });

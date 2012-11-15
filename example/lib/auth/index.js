@@ -9,8 +9,9 @@ get('/', function(page, model) {
   return model.subscribe("users." + model.session.userId, function(err, user) {
     model.ref('_user', user);
     page.render();
-    return model.fn('_loggedIn', '_user.auth', function(auth) {
-      return auth.facebook || auth.linkedin || auth.twitter || auth.github || auth.local;
+    model.fn('_loggedIn', '_user.auth', function(auth) {
+        console.log(model.session);
+      return model.session.loggedIn;
     });
   });
 });
