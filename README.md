@@ -4,7 +4,7 @@ Provides authentication middleware (using [Passport](http://passportjs.org/)) fo
 
 ###Step 1
 Initialize derby-auth above `expressApp.use()` directives.
-```
+```javascript
 var
     // Pass in actual Passport Strategy objects as well as their configurations (see http://passportjs.org/guide/facebook/)
     // Note: this means you'd need "passport-facebook" in your package.json file
@@ -26,7 +26,7 @@ derbyAuth.init(expressApp, store, strategies, options);
 ```
 ###Step 2
 Use derby-auth's middleware
-```
+```javascript
 .use(store.modelMiddleware())
 // derbyAuth.middleware is inserted after modelMiddleware and before the app router to pass server accessible data to a model
 .use(derbyAuth.middleware())
@@ -34,7 +34,7 @@ Use derby-auth's middleware
 ```
 ###Step 3
 User derby-auth's routes
-```
+```javascript
 derbyAuth.routes();
 ```
 
