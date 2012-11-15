@@ -1,20 +1,36 @@
 var passport = require('passport')
   , LocalStrategy = require('passport-local').Strategy
   , flash = require('connect-flash') // used for setting error messages
-  , savedStrageties = {}
   , _  = require('lodash')
+
+  // Closure variables kept around after initialization
+  , strategies
+  , expressApp
+  , options
   , model
-  , failureRedirect = '/' // normally '/login', TODO this should be passed in as config
 
 /**
- * Creates middleware which provides authentication for DerbyJS
  * @param expressApp
  * @param {store} Racer store, used for configuring queries and accessControl
  * @param {strategies} A hash of strategy objects and their configurations. See https://github.com/lefnire/derby-examples/blob/master/authentication/src/server/index.coffee
+ * @param {options}
  */
-module.exports.middleware = function(expressApp, store, strategies) {
-    // Setup queries & accessControl
-    require('./lib/store')(store);
+module.exports.init = function(app, store, strat, conf) {
+    // keep around in module closure for future use by routes()
+    expressApp = app;
+    strategies = strat;
+    options = conf;
+
+    _.defaults(options, {failureRedirect: '/', domain: "http://localhost:3000"})
+
+    require('./lib/store')(store); // Setup queries & accessControl
+    setupPassport();
+}
+
+/**
+ * Creates middleware which provides authentication for DerbyJS
+ */
+module.exports.middleware = function() {
 
     expressApp.use(flash());
 
@@ -37,11 +53,9 @@ module.exports.middleware = function(expressApp, store, strategies) {
 
     // Initialize Passport.  Also use passport.session() middleware, to support
     // persistent login sessions (recommended).
-    savedStrategies = strategies; // keep around in module closure for future use by routes()
-    setupPassport(strategies);
     expressApp.use(passport.initialize());
     expressApp.use(passport.session());
-    return function(req,res,next){next()}
+    return function(req,res,next){return next()}
 };
 
 /**
@@ -49,7 +63,8 @@ module.exports.middleware = function(expressApp, store, strategies) {
  * in middelware() setup. However, it breaks Derby routes - so we need this to call separately after expressApp
  * hass been initialized
  */
-module.exports.routes = function(expressApp) {
+module.exports.routes = function() {
+
     // POST /login
     //   Use passport.authenticate() as route middleware to authenticate the
     //   request.  If authentication fails, the user will be redirected back to the
@@ -58,7 +73,7 @@ module.exports.routes = function(expressApp) {
     //
     //   curl -v -d "username=bob&password=secret" http://127.0.0.1:3000/login
     expressApp.post('/login',
-        passport.authenticate('local', { failureRedirect: failureRedirect, failureFlash: true }),
+        passport.authenticate('local', { failureRedirect: options.failureRedirect, failureFlash: true }),
         function(req, res) {
             res.redirect('/');
         }
@@ -84,7 +99,6 @@ module.exports.routes = function(expressApp) {
      */
 
     expressApp.post('/register', function(req, res){
-        model = req.getModel();
 
         // if user already registered, return
         if (model.get('users.' + model.session.userId + '.auth.local')) {
@@ -96,7 +110,7 @@ module.exports.routes = function(expressApp) {
             var userObj = getUserObj(users, {err: err});
             if (userObj) {
                 // user already registered with that name, TODO send error message
-                return res.redirect(failureRedirect);
+                return res.redirect(options.failureRedirect);
             } else {
                 // Legit, register
                 model.set('users.' + model.session.userId + '.auth.local', req.body);
@@ -105,7 +119,7 @@ module.exports.routes = function(expressApp) {
         });
     });
 
-    _.each(savedStrategies, function(strategy, name){
+    _.each(strategies, function(strategy, name){
         // GET /auth/facebook
         //   Use passport.authenticate() as route middleware to authenticate the
         //   request.  The first step in Facebook authentication will involve
@@ -124,7 +138,7 @@ module.exports.routes = function(expressApp) {
         //   login page.  Otherwise, the primary route function function will be called,
         //   which, in this example, will redirect the user to the home page.
         expressApp.get('/auth/' + name + '/callback',
-            passport.authenticate(name, { failureRedirect: failureRedirect }),
+            passport.authenticate(name, { failureRedirect: options.failureRedirect }),
             function(req, res) {
                 res.redirect('/');
             });
@@ -147,7 +161,8 @@ module.exports.routes = function(expressApp) {
     //    }
 }
 
-function setupPassport(strategies) {
+function setupPassport() {
+
     // Passport session setup.
     //   To support persistent login sessions, Passport needs to be able to
     //   serialize users into and deserialize users out of the session.  Typically,
@@ -199,7 +214,7 @@ function setupPassport(strategies) {
 
         // Provide default values for options not passed in
         // TODO pass in as conf URL variable
-        _.defaults(obj.conf, {callbackURL: "http://localhost:3000/auth/" + name + "/callback"})
+        _.defaults(obj.conf, {callbackURL: options.domain + "/auth/" + name + "/callback"})
 
         // Use the FacebookStrategy within Passport.
         //   Strategies in Passport require a `verify` function, which accept
