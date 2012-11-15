@@ -55,16 +55,6 @@ module.exports.middleware = function() {
             _model.set("users." + sess.userId, _options.schema);
         }
 
-        // Persistent URLs (PURLs) (eg, http://localhost/{guid})
-        // tests if UUID was used (bookmarked private url), and restores that session
-        // Workflowy uses this method, for example
-        var uidParam = req.url.split('/')[1]
-          , acceptableUid = require('guid').isGuid(uidParam)
-        if (_options.allowPurl && acceptableUid && (sess.userId !== uidParam) && !sess.loggedIn) {
-            // TODO check if in database - issue with accessControl which is on current uid?
-            sess.userId = uidParam;
-        }
-
         return next();
     });
 
@@ -81,6 +71,23 @@ module.exports.middleware = function() {
  * hass been initialized
  */
 module.exports.routes = function() {
+
+    // Persistent URLs (PURLs) (eg, http://localhost/users/{guid})
+    // tests if UUID was used (bookmarked private url), and restores that session
+    // Workflowy uses this method, for example
+    _expressApp.get('/users/:uid', function(req, res, next) {
+        var uid = req.params.uid,
+            acceptableUid = (require('guid').isGuid(uid)),
+            sess = req.getModel().session;
+        console.log({uid:uid, acceptableUid:acceptableUid});
+        if (_options.allowPurl && acceptableUid && (sess.userId !== uid) && !sess.loggedIn) {
+            // TODO check if in database - issue with accessControl which is on current uid
+            sess.userId = uid;
+            return res.redirect('/');
+        } else {
+            return next();
+        }
+    });
 
     // POST /login
     //   Use passport.authenticate() as route middleware to authenticate the
