@@ -42,8 +42,8 @@ module.exports.middleware = function() {
 
     // Must be called before passport middleware so they have access to model
     _expressApp.use(function(req, res, next) {
-        var model = req.getModel(),
-            sess = model.session;
+        model = req.getModel();
+        var sess = model.session;
 
         model.set('_loggedIn', sess.passport && sess.passport.user);
 
