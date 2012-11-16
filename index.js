@@ -87,18 +87,14 @@ module.exports.middleware = function() {
         //   however, in this example we are using a baked-in set of users.
         passport.use(new LocalStrategy(
             function(username, password, done) {
-                // asynchronous verification, for effect...
-                process.nextTick(function () {
-
-                    // Find the user by username.  If there is no user with the given
-                    // username, or the password is not correct, set the user to `false` to
-                    // indicate failure and set a flash message.  Otherwise, return the
-                    // authenticated `user`.
-                    var q = model.query('users').withLogin(username, password);
-                    _fetchUser(q, model, function(userObj){
-                        if (!userObj) return done(null, false, { message: 'User not found.' });
-                        _loginUser(done, model, userObj);
-                    });
+                // Find the user by username.  If there is no user with the given
+                // username, or the password is not correct, set the user to `false` to
+                // indicate failure and set a flash message.  Otherwise, return the
+                // authenticated `user`.
+                var q = model.query('users').withLogin(username, password);
+                _fetchUser(q, model, function(userObj){
+                    if (!userObj) return done(null, false, { message: 'User not found.' });
+                    _loginUser(done, model, userObj);
                 });
             }
         ));
@@ -114,24 +110,20 @@ module.exports.middleware = function() {
             //   credentials (in this case, an accessToken, refreshToken, and Facebook
             //   profile), and invoke a callback with a user object.
             passport.use(new obj.strategy(obj.conf, function(accessToken, refreshToken, profile, done) {
-                    // asynchronous verification, for effect...
-                    process.nextTick(function () {
-
-                        // To keep the example simple, the user's Facebook profile is returned to
-                        // represent the logged-in user.  In a typical application, you would want
-                        // to associate the Facebook account with a user record in your database,
-                        // and return that user instead.
-                        var q = model.query('users').withProvider(profile.provider, profile.id);
-                        _fetchUser(q, model, function(userObj){
-                            // Has user been tied to facebook account already?
-                            if(!userObj) {
-                                var userPath = "users." + model.session.userId;
-                                model.setNull(userPath + '.auth', {});
-                                model.set(userPath + '.auth.' + profile.provider, profile);
-                                userObj = model.get(userPath);
-                            }
-                            _loginUser(done, model, userObj);
-                        });
+                    // To keep the example simple, the user's Facebook profile is returned to
+                    // represent the logged-in user.  In a typical application, you would want
+                    // to associate the Facebook account with a user record in your database,
+                    // and return that user instead.
+                    var q = model.query('users').withProvider(profile.provider, profile.id);
+                    _fetchUser(q, model, function(userObj){
+                        // Has user been tied to facebook account already?
+                        if(!userObj) {
+                            var userPath = "users." + model.session.userId;
+                            model.setNull(userPath + '.auth', {});
+                            model.set(userPath + '.auth.' + profile.provider, profile);
+                            userObj = model.get(userPath);
+                        }
+                        _loginUser(done, model, userObj);
                     });
                 }
             ));
