@@ -73,7 +73,7 @@ module.exports.middleware = function() {
 
         passport.deserializeUser(function(id, done) {
             var q = model.query('users').withId(id);
-            _fetchUser(q, model, function(userObj){
+            _fetchUser(q, model, done, function(userObj){
                 if(userObj) {
                     _loginUser(done, model, userObj);
                 }
@@ -92,7 +92,7 @@ module.exports.middleware = function() {
                 // indicate failure and set a flash message.  Otherwise, return the
                 // authenticated `user`.
                 var q = model.query('users').withLogin(username, password);
-                _fetchUser(q, model, function(userObj){
+                _fetchUser(q, model, done, function(userObj){
                     if (!userObj) return done(null, false, { message: 'User not found.' });
                     _loginUser(done, model, userObj);
                 });
@@ -115,7 +115,7 @@ module.exports.middleware = function() {
                     // to associate the Facebook account with a user record in your database,
                     // and return that user instead.
                     var q = model.query('users').withProvider(profile.provider, profile.id);
-                    _fetchUser(q, model, function(userObj){
+                    _fetchUser(q, model, done, function(userObj){
                         // Has user been tied to facebook account already?
                         if(!userObj) {
                             var userPath = "users." + model.session.userId;
@@ -199,7 +199,7 @@ module.exports.routes = function() {
           , sess = model.session;
 
         var q = model.query('users').withUsername(req.body.username);
-        _fetchUser(q, model, function(userObj){
+        _fetchUser(q, model, done, function(userObj){
             // if user already registered, return
             if (model.get('users.' + sess.userId + '.auth.local')) return res.redirect('/');
 
@@ -259,14 +259,12 @@ module.exports.routes = function() {
 /**
  * Util function, parses user query result and optionally console.logs() a second param
  */
-function _fetchUser(query, model, callback){
+function _fetchUser(query, model, done, callback){
     model.fetch(query, function(err, users) {
         if (err) return done(err);
-
         var userObj, u;
         userObj = users && (u = users.get()) && u.length > 0 && u[0]
         if (process.env.NODE_ENV!=='production') console.log({err:err, user:userObj});
-
         return callback(userObj);
     });
 }
