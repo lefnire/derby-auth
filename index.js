@@ -45,6 +45,8 @@ module.exports.middleware = function() {
         model = req.getModel(),
             sess = model.session;
 
+        model.set('_loggedIn', sess.passport && sess.passport.user);
+
         // set any error / success messages
         model.set('_flash', req.flash());
 
@@ -65,18 +67,16 @@ module.exports.middleware = function() {
         //   serialize users into and deserialize users out of the session.  Typically,
         //   this will be as simple as storing the user ID when serializing, and finding
         //   the user by ID when deserializing.
-        passport.serializeUser(function(user, done) {
-            done(null, user.id);
+        passport.serializeUser(function(uid, done) {
+            done(null, uid);
         });
 
         passport.deserializeUser(function(id, done) {
             var q = model.query('users').withId(id);
-            model.fetch(q, function(err, users) {
-                var userObj = getUserObj(users, {err: err});
-                if (err) return done(err);
-                if (!userObj && !err) return done(new Error('User not found'));
-                model.session.loggedIn = !_.isEmpty(userObj.auth);
-                return done(null, userObj);
+            _fetchUser(q, model, function(userObj){
+                if(userObj) {
+                    _loginUser(done, model, userObj);
+                }
             });
         });
 
@@ -95,14 +95,9 @@ module.exports.middleware = function() {
                     // indicate failure and set a flash message.  Otherwise, return the
                     // authenticated `user`.
                     var q = model.query('users').withLogin(username, password);
-                    return model.fetch(q, function(err, users) {
-                        var userObj = getUserObj(users, {err: err});
-                        if (err) return done(err);
-                        if (!userObj) return done(null, false, { message: 'Invalid login' });
-
-                        // Success
-                        model.session.userId = userObj.id;
-                        return done(null, userObj);
+                    _fetchUser(q, model, function(userObj){
+                        if (!userObj) return done(null, false, { message: 'User not found.' });
+                        _loginUser(done, model, userObj);
                     });
                 });
             }
@@ -127,18 +122,15 @@ module.exports.middleware = function() {
                         // to associate the Facebook account with a user record in your database,
                         // and return that user instead.
                         var q = model.query('users').withProvider(profile.provider, profile.id);
-                        model.fetch(q, function(err, users) {
-                            var userObj = getUserObj(users, {err: err, profile: profile});
-                            // # Has user been tied to facebook account already?
-                            if (!userObj) {
+                        _fetchUser(q, model, function(userObj){
+                            // Has user been tied to facebook account already?
+                            if(!userObj) {
                                 var userPath = "users." + model.session.userId;
                                 model.setNull(userPath + '.auth', {});
                                 model.set(userPath + '.auth.' + profile.provider, profile);
                                 userObj = model.get(userPath);
-                            } else {
-                                model.session.userId = userObj.id;
                             }
-                            return done(null, userObj);
+                            _loginUser(done, model, userObj);
                         });
                     });
                 }
@@ -211,22 +203,22 @@ module.exports.routes = function() {
      */
 
     _expressApp.post('/register', function(req, res){
-        var model = req.getModel();
+        var model = req.getModel()
+          , sess = model.session;
 
         // if user already registered, return
-        if (model.get('users.' + model.session.userId + '.auth.local')) {
+        if (model.get('users.' + sess.userId + '.auth.local')) {
             return res.redirect('/');
         }
 
         var q = model.query('users').withUsername(req.body.username);
-        model.fetch(q, function(err, users){
-            var userObj = getUserObj(users, {err: err});
+        _fetchUser(q, model, function(userObj){
             if (userObj) {
                 // user already registered with that name, TODO send error message
                 return res.redirect(_options.failureRedirect);
             } else {
                 // Legit, register
-                model.set('users.' + model.session.userId + '.auth.local', req.body);
+                model.set('users.' + sess.userId + '.auth.local', req.body);
                 return res.redirect('/');
             }
         });
@@ -259,7 +251,6 @@ module.exports.routes = function() {
 
     _expressApp.get('/logout', function(req, res){
         req.session.userId = undefined;
-        req.session.loggedIn = false;
         req.logout();
         res.redirect('/');
     });
@@ -278,12 +269,20 @@ module.exports.routes = function() {
 /**
  * Util function, parses user query result and optionally console.logs() a second param
  */
-function getUserObj(users, logObj){
-    var userObj, u;
-    userObj = users && (u = users.get()) && u.length > 0 && u[0];
-    if (logObj) {
-        _.defaults(logObj, {userObj:userObj});
-        console.log(logObj);
-    }
-    return userObj;
+function _fetchUser(query, model, callback){
+    model.fetch(query, function(err, users) {
+        if (err) return done(err);
+
+        var userObj, u;
+        userObj = users && (u = users.get()) && u.length > 0 && u[0]
+        if (process.env.NODE_ENV!=='production') console.log({err:err, user:userObj});
+
+        return callback(userObj);
+    });
+}
+
+function _loginUser(done, model, userObj) {
+    model.session.userId = userObj.id;
+    // done() sets req.user, which is later referenced to determine _loggedIn
+    return done(null, userObj.id);
 }
