@@ -198,13 +198,11 @@ module.exports.routes = function() {
         var model = req.getModel()
           , sess = model.session;
 
-        // if user already registered, return
-        if (model.get('users.' + sess.userId + '.auth.local')) {
-            return res.redirect('/');
-        }
-
         var q = model.query('users').withUsername(req.body.username);
         _fetchUser(q, model, function(userObj){
+            // if user already registered, return
+            if (model.get('users.' + sess.userId + '.auth.local')) return res.redirect('/');
+
             if (userObj) {
                 // user already registered with that name, TODO send error message
                 return res.redirect(_options.failureRedirect);
