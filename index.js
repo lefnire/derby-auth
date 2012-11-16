@@ -30,7 +30,7 @@ module.exports.init = function(expressApp, store, strategies, options) {
         allowPurl: false
     });
     require('./lib/store')(store); // Setup queries & accessControl
-}
+};
 
 /**
  * Creates middleware which provides authentication for DerbyJS
@@ -42,7 +42,7 @@ module.exports.middleware = function() {
 
     // Must be called before passport middleware so they have access to model
     _expressApp.use(function(req, res, next) {
-        model = req.getModel(),
+        var model = req.getModel(),
             sess = model.session;
 
         model.set('_loggedIn', sess.passport && sess.passport.user);
@@ -107,7 +107,7 @@ module.exports.middleware = function() {
 
             // Provide default values for options not passed in
             // TODO pass in as conf URL variable
-            _.defaults(obj.conf, {callbackURL: _options.domain + "/auth/" + name + "/callback"})
+            _.defaults(obj.conf, {callbackURL: _options.domain + "/auth/" + name + "/callback"});
 
             // Use the FacebookStrategy within Passport.
             //   Strategies in Passport require a `verify` function, which accept
@@ -264,7 +264,7 @@ module.exports.routes = function() {
     //        if (req.isAuthenticated()) { return next(); }
     //        res.redirect('/login')
     //    }
-}
+};
 
 /**
  * Util function, parses user query result and optionally console.logs() a second param
@@ -274,7 +274,7 @@ function _fetchUser(query, model, callback){
         if (err) return done(err);
 
         var userObj, u;
-        userObj = users && (u = users.get()) && u.length > 0 && u[0]
+        userObj = users && (u = users.get()) && u.length > 0 && u[0];
         if (process.env.NODE_ENV!=='production') console.log({err:err, user:userObj});
 
         return callback(userObj);
