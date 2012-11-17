@@ -12,20 +12,33 @@ var passport = require('passport')
  * @param {options} TODO document this
  */
 module.exports = function(store, strategies, options) {
+   /**
+    * FIXME
+    * Model is required for all authentication functions, since we need to look up the requested user from the database
+    * and/or save new users to the database. The model for each current user's request can be retrieved in expressApp.use()
+    * callbacks, since request is a paramter (`req.getModel()`). However, for passport.use(strategy,..) callbacks and
+    * passport.deserializeUser(), request is inaccessible; therefore so is model - yet model is still required to look up the
+    * user from the database. As a result, we're scoping it up here for closure access by those functions. This frightens
+    * me because that means each logged in user is accessing the same model instance, which could very well break things.
+    * If anyone has any ideas, please message me.
+    */
     var model;
 
+    /**
+     * Util functions
+     * --------------------
+     */
+
+    // Setup queries & accessControl
+    require('./lib/store')(store);
+
+    // Setup default options
     _.defaults(options, {
         failureRedirect: '/',
         domain: "http://localhost:3000",
         schema: {},
         allowPurl: false
     });
-    require('./lib/store')(store); // Setup queries & accessControl
-
-    /**
-     * Util functions
-     * --------------------
-     */
 
     function _fetchUser(query, model, done, callback){
         model.fetch(query, function(err, users) {
