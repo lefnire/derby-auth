@@ -3,7 +3,7 @@
 Provides authentication middleware (using [Passport](http://passportjs.org/)) for use in your Derby projects.
 
 ###Step 1
-Initialize derby-auth above `expressApp.use()` directives.
+Setup derby-auth strategies and configurations
 ```javascript
 var
     auth = require('derby-auth'),
@@ -21,24 +21,16 @@ var
     options = {
         domain: (process.env.NODE_ENV==='production' ? "http://my.com" : "http://localhost:3000" )
     }
-
-// Init. {expressApp} sets up routes, {store} sets up accessControl & queries
-auth.init(expressApp, store, strategies, options);
 ```
+
 ###Step 2
-Use derby-auth's middleware
+Use derby-auth's mounted middleware
 ```javascript
 .use(store.modelMiddleware())
 // derby-auth.middleware is inserted after modelMiddleware and before the app router to pass server accessible data to a model
-.use(auth.middleware())
+.use(auth(store, strategies, options))
 .use(app.router())
 ```
-###Step 3
-Use derby-auth's routes
-```javascript
-auth.routes();
-```
-
 See the [example](https://github.com/lefnire/derby-auth/tree/master/example) for more details, as well as login / registration forms, sign-in buttons, etc.
 
 ## Why not EveryAuth?
