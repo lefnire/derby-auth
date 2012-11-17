@@ -30,54 +30,50 @@ var ONE_YEAR = 1000 * 60 * 60 * 24 * 365
  * rather than a configuration file. We're storing it in conf.js for demo purposes.
  */
 var
-    authKeys = require('./conf')
+    // change to `require('derby-auth')` in your project
+    auth = require('../../../index')
+
+  , keys = require('./conf')
 
   , strategies = {
       facebook: {
         strategy: require('passport-facebook').Strategy,
         conf: {
-          clientID: process.env.FACEBOOK_KEY || authKeys.fb.appId,
-          clientSecret: process.env.FACEBOOK_SECRET || authKeys.fb.appSecret
+          clientID: process.env.FACEBOOK_KEY || keys.fb.appId,
+          clientSecret: process.env.FACEBOOK_SECRET || keys.fb.appSecret
         }
       },
       linkedin: {
         strategy: require('passport-linkedin').Strategy,
         conf: {
-          consumerKey: process.env.LINKEDIN_API_KEY || authKeys.linkedin.apiKey,
-          consumerSecret: process.env.LINKEDIN_SECRET_KEY || authKeys.linkedin.apiSecret
+          consumerKey: process.env.LINKEDIN_API_KEY || keys.linkedin.apiKey,
+          consumerSecret: process.env.LINKEDIN_SECRET_KEY || keys.linkedin.apiSecret
         }
       },
       github: {
         strategy: require('passport-github').Strategy,
         conf: {
-          clientID: process.env.GITHUB_CLIENT_ID || authKeys.github.appId,
-          clientSecret: process.env.GITHUB_CLIENT_SECRET || authKeys.github.appSecret,
+          clientID: process.env.GITHUB_CLIENT_ID || keys.github.appId,
+          clientSecret: process.env.GITHUB_CLIENT_SECRET || keys.github.appSecret,
           callbackURL: "http://127.0.0.1:3000/auth/github/callback"
         }
       },
       twitter: {
         strategy: require('passport-twitter').Strategy,
         conf: {
-          consumerKey: process.env.TWITTER_CONSUMER_KEY || authKeys.twit.consumerKey,
-          consumerSecret: process.env.TWITTER_CONSUMER_SECRET || authKeys.twit.consumerSecret,
+          consumerKey: process.env.TWITTER_CONSUMER_KEY || keys.twit.consumerKey,
+          consumerSecret: process.env.TWITTER_CONSUMER_SECRET || keys.twit.consumerSecret,
           // You can optionally pass in per-strategy configuration options (consult Passport documentation)
           callbackURL: "http://127.0.0.1:3000/auth/twitter/callback"
         }
       }
     }
 
-    // change to `require('derby-auth')` in your project
-  , derbyAuth = require('../../../index')
-
     // optional parameters passed into derby-auth.init, domain is required due to some Passport technicalities,
     // allowPurl lets people access non-authenticated accounts at /:uuid, and schema sets up default user
     // account schema structures
   , options = { domain: 'http://localhost:3000' }
   ;
-
-// Pass in {expressApp} (required, sets up routes), {store} (required, sets up accessControl & queries), {strategies}
-// (required, see above), and options (optional)
-derbyAuth.init(expressApp, store, strategies, options);
 
 expressApp
     .use(express.favicon())
@@ -95,18 +91,14 @@ expressApp
     /**
      * (2)
      * derbyAuth.middleware is inserted after modelMiddleware and before the app router to pass server accessible data to a model
+     * Pass in {store} (sets up accessControl & queries), {strategies} (see above), and options
      */
-    .use(derbyAuth.middleware())
+    .use(auth(store, strategies, options))
+
     .use(app.router())
     .use(expressApp.router)
     .use(serverError(root)
 );
-
-/**
- * (3)
- * Additionally, Passport needs static routes for some auth setup, so we set that up here.
- */
-derbyAuth.routes();
 
 expressApp.all('*', function(req) {
   throw "404: " + req.url;
