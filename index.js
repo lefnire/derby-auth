@@ -12,17 +12,6 @@ var passport = require('passport')
  * @param {options} TODO document this
  */
 module.exports = function(store, strategies, options) {
-   /**
-    * FIXME
-    * Model is required for all authentication functions, since we need to look up the requested user from the database
-    * and/or save new users to the database. The model for each current user's request can be retrieved in expressApp.use()
-    * callbacks, since request is a paramter (`req.getModel()`). However, for passport.use(strategy,..) callbacks and
-    * passport.deserializeUser(), request is inaccessible; therefore so is model - yet model is still required to look up the
-    * user from the database. As a result, we're scoping it up here for closure access by those functions. This frightens
-    * me because that means each logged in user is accessing the same model instance, which could very well break things.
-    * If anyone has any ideas, please message me.
-    */
-    var model;
 
     /**
      * Util functions
@@ -65,8 +54,8 @@ module.exports = function(store, strategies, options) {
 
     // Must be called before passport middleware so they have access to model
     expressApp.use(function(req, res, next) {
-        model = req.getModel();
-        var sess = model.session;
+        var model = req.getModel()
+            , sess = model.session;
 
         model.set('_loggedIn', sess.passport && sess.passport.user);
 
@@ -80,79 +69,87 @@ module.exports = function(store, strategies, options) {
             model.set("users." + sess.userId, options.schema);
         }
 
-        return next();
-    });
+        /**
+         * Passport Setup
+         * ------------------
+         */
 
-    /**
-     * Passport Setup
-     * ------------------
-     */
-
-    // Passport session setup.
-    //   To support persistent login sessions, Passport needs to be able to
-    //   serialize users into and deserialize users out of the session.  Typically,
-    //   this will be as simple as storing the user ID when serializing, and finding
-    //   the user by ID when deserializing.
-    passport.serializeUser(function(uid, done) {
-        done(null, uid);
-    });
-
-    passport.deserializeUser(function(id, done) {
-        var q = model.query('users').withId(id);
-        _fetchUser(q, model, done, function(userObj){
-            if(userObj) {
-                _loginUser(done, model, userObj);
-            }
+        // Passport session setup.
+        //   To support persistent login sessions, Passport needs to be able to
+        //   serialize users into and deserialize users out of the session.  Typically,
+        //   this will be as simple as storing the user ID when serializing, and finding
+        //   the user by ID when deserializing.
+        passport.serializeUser(function(uid, done) {
+            done(null, uid);
         });
-    });
 
-    // Use the LocalStrategy within Passport.
-    //   Strategies in passport require a `verify` function, which accept
-    //   credentials (in this case, a username and password), and invoke a callback
-    //   with a user object.  In the real world, this would query a database;
-    //   however, in this example we are using a baked-in set of users.
-    passport.use(new LocalStrategy(
-        function(username, password, done) {
-            // Find the user by username.  If there is no user with the given
-            // username, or the password is not correct, set the user to `false` to
-            // indicate failure and set a flash message.  Otherwise, return the
-            // authenticated `user`.
-            var q = model.query('users').withLogin(username, password);
+        passport.deserializeUser(function(id, done) {
+            return done(null, id);
+
+            // TODO Revisit:
+            // Because we're logging a user into req.session on passport strategy authentication,
+            // we don't need to deserialize the user. (Plus the app will be pulling the user out of the
+            // database manually via model.fetch / .subscribe). Additionally, attempting to deserialize the user here
+            // by fetching from the database yields "Error: Model mutation performed after bundling for clientId:..."
+
+            /*var q = model.query('users').withId(id);
             _fetchUser(q, model, done, function(userObj){
-                if (!userObj) return done(null, false, { message: 'User not found.' });
-                _loginUser(done, model, userObj);
-            });
-        }
-    ));
+                if(userObj) {
+                    _loginUser(done, model, userObj);
+                }
+            });*/
+        });
 
-    _.each(strategies, function(obj, name){
-
-        // Provide default values for options not passed in
-        // TODO pass in as conf URL variable
-        _.defaults(obj.conf, {callbackURL: options.domain + "/auth/" + name + "/callback"});
-
-        // Use the FacebookStrategy within Passport.
-        //   Strategies in Passport require a `verify` function, which accept
-        //   credentials (in this case, an accessToken, refreshToken, and Facebook
-        //   profile), and invoke a callback with a user object.
-        passport.use(new obj.strategy(obj.conf, function(accessToken, refreshToken, profile, done) {
-                // To keep the example simple, the user's Facebook profile is returned to
-                // represent the logged-in user.  In a typical application, you would want
-                // to associate the Facebook account with a user record in your database,
-                // and return that user instead.
-                var q = model.query('users').withProvider(profile.provider, profile.id);
+        // Use the LocalStrategy within Passport.
+        //   Strategies in passport require a `verify` function, which accept
+        //   credentials (in this case, a username and password), and invoke a callback
+        //   with a user object.  In the real world, this would query a database;
+        //   however, in this example we are using a baked-in set of users.
+        passport.use(new LocalStrategy(
+            function(username, password, done) {
+                // Find the user by username.  If there is no user with the given
+                // username, or the password is not correct, set the user to `false` to
+                // indicate failure and set a flash message.  Otherwise, return the
+                // authenticated `user`.
+                var q = model.query('users').withLogin(username, password);
                 _fetchUser(q, model, done, function(userObj){
-                    // Has user been tied to facebook account already?
-                    if(!userObj) {
-                        var userPath = "users." + model.session.userId;
-                        model.setNull(userPath + '.auth', {});
-                        model.set(userPath + '.auth.' + profile.provider, profile);
-                        userObj = model.get(userPath);
-                    }
+                    if (!userObj) return done(null, false, { message: 'User not found.' });
                     _loginUser(done, model, userObj);
                 });
             }
         ));
+
+        _.each(strategies, function(obj, name){
+
+            // Provide default values for options not passed in
+            // TODO pass in as conf URL variable
+            _.defaults(obj.conf, {callbackURL: options.domain + "/auth/" + name + "/callback"});
+
+            // Use the FacebookStrategy within Passport.
+            //   Strategies in Passport require a `verify` function, which accept
+            //   credentials (in this case, an accessToken, refreshToken, and Facebook
+            //   profile), and invoke a callback with a user object.
+            passport.use(new obj.strategy(obj.conf, function(accessToken, refreshToken, profile, done) {
+                    // To keep the example simple, the user's Facebook profile is returned to
+                    // represent the logged-in user.  In a typical application, you would want
+                    // to associate the Facebook account with a user record in your database,
+                    // and return that user instead.
+                    var q = model.query('users').withProvider(profile.provider, profile.id);
+                    _fetchUser(q, model, done, function(userObj){
+                        // Has user been tied to facebook account already?
+                        if(!userObj) {
+                            var userPath = "users." + model.session.userId;
+                            model.setNull(userPath + '.auth', {});
+                            model.set(userPath + '.auth.' + profile.provider, profile);
+                            userObj = model.get(userPath);
+                        }
+                        _loginUser(done, model, userObj);
+                    });
+                }
+            ));
+        });
+
+        return next();
     });
 
     // Initialize Passport.  Also use passport.session() middleware, to support
