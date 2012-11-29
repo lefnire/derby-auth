@@ -1,8 +1,9 @@
 var passport = require('passport')
-  , LocalStrategy = require('passport-local').Strategy
-  , flash = require('connect-flash') // used for setting error messages
-  , _  = require('underscore')
-  , expressApp = require('express')()
+    , LocalStrategy = require('passport-local').Strategy
+    , flash = require('connect-flash') // used for setting error messages
+    , _  = require('underscore')
+    , expressApp = require('express')()
+    , setupStore = require('./store')
   ;
 
 /**
@@ -13,13 +14,8 @@ var passport = require('passport')
  */
 module.exports = function(store, strategies, options) {
 
-    /**
-     * Util functions
-     * --------------------
-     */
-
     // Setup queries & accessControl
-    require('./lib/store')(store);
+    setupStore(store);
 
     // Setup default options
     _.defaults(options, {
@@ -29,31 +25,28 @@ module.exports = function(store, strategies, options) {
         allowPurl: false
     });
 
-    function _fetchUser(query, model, done, callback){
-        model.fetch(query, function(err, users) {
-            if (err) return done(err);
-            var userObj, u;
-            userObj = users && (u = users.get()) && u.length > 0 && u[0];
-            if (process.env.NODE_ENV!=='production') console.log({err:err, user:userObj});
-            return callback(userObj);
-        });
-    }
-
-    function _loginUser(done, model, userObj) {
-        model.session.userId = userObj.id;
-        // done() sets req.user, which is later referenced to determine _loggedIn
-        return done(null, userObj.id);
-    }
-
-    /**
-     * Express Configuration
-     * --------------------
-     */
-
     expressApp.use(flash());
 
     // Must be called before passport middleware so they have access to model
-    expressApp.use(function(req, res, next) {
+    expressApp.use(setupMiddleware(strategies, options));
+
+    // Initialize Passport.  Also use passport.session() middleware, to support
+    // persistent login sessions (recommended).
+    expressApp.use(passport.initialize());
+    expressApp.use(passport.session());
+
+    // Setup static passport authentication routes
+    setupStaticRoutes(expressApp, strategies, options);
+
+    return expressApp;
+}
+
+/**
+ * Passport Setup
+ * ------------------
+ */
+function setupMiddleware(strategies, options) {
+    return function(req, res, next) {
         var model = req.getModel()
             , sess = model.session;
 
@@ -68,11 +61,6 @@ module.exports = function(store, strategies, options) {
             _.defaults(options.schema, {auth:{}}); // make sure user schema is defaulted with at least {auth:{}}
             model.set("users." + sess.userId, options.schema);
         }
-
-        /**
-         * Passport Setup
-         * ------------------
-         */
 
         // Passport session setup.
         //   To support persistent login sessions, Passport needs to be able to
@@ -91,12 +79,10 @@ module.exports = function(store, strategies, options) {
             // we don't need to deserialize the user. (Plus the app will be pulling the user out of the
             // database manually via model.fetch / .subscribe). Additionally, attempting to deserialize the user here
             // by fetching from the database yields "Error: Model mutation performed after bundling for clientId:..."
-
             /*var q = model.query('users').withId(id);
-            _fetchUser(q, model, done, function(userObj){
-                if(userObj) {
-                    _loginUser(done, model, userObj);
-                }
+            _fetchUser(q, model, function(err, userObj){
+              if(err && !err.notFound) return done(err);
+              _loginUser(model, userObj, done);
             });*/
         });
 
@@ -112,9 +98,13 @@ module.exports = function(store, strategies, options) {
                 // indicate failure and set a flash message.  Otherwise, return the
                 // authenticated `user`.
                 var q = model.query('users').withLogin(username, password);
-                _fetchUser(q, model, done, function(userObj){
-                    if (!userObj) return done(null, false, { message: 'User not found.' });
-                    _loginUser(done, model, userObj);
+                _fetchUser(q, model, function(err, userObj){
+                    // user simply not found, no need to crash the server
+                    if (err && err.notFound) return done(null, false, err);
+                    // there was a real error
+                    if (err) return done(err);
+
+                    _loginUser(model, userObj, done);
                 });
             }
         ));
@@ -135,35 +125,34 @@ module.exports = function(store, strategies, options) {
                     // to associate the Facebook account with a user record in your database,
                     // and return that user instead.
                     var q = model.query('users').withProvider(profile.provider, profile.id);
-                    _fetchUser(q, model, done, function(userObj){
-                        // Has user been tied to facebook account already?
-                        if(!userObj) {
+                    _fetchUser(q, model, function(err, userObj){
+                        if (err && !err.notFound) return done(err);
+
+                        // User exists, but hasn't yet been associated with social network
+                        if(err && err.notFound) {
                             var userPath = "users." + model.session.userId;
                             model.setNull(userPath + '.auth', {});
                             model.set(userPath + '.auth.' + profile.provider, profile);
                             userObj = model.get(userPath);
                         }
-                        _loginUser(done, model, userObj);
+                        _loginUser(model, userObj, done);
                     });
                 }
             ));
         });
 
         return next();
-    });
+    }
+}
 
-    // Initialize Passport.  Also use passport.session() middleware, to support
-    // persistent login sessions (recommended).
-    expressApp.use(passport.initialize());
-    expressApp.use(passport.session());
-
-    /**
-     * Routes (Including Passport Routes)
-     * --------------------
-     * Sets up static routes for Derby app. Normally this wouldn't be necessary, would just place this logic
-     * in middelware() setup. However, it breaks Derby routes - so we need this to call separately after expressApp
-     * hass been initialized
-     */
+/**
+ * Routes (Including Passport Routes)
+ * --------------------
+ * Sets up static routes for Derby app. Normally this wouldn't be necessary, would just place this logic
+ * in middelware() setup. However, it breaks Derby routes - so we need this to call separately after expressApp
+ * hass been initialized
+ */
+function setupStaticRoutes(expressApp, strategies, options) {
 
     // Persistent URLs (PURLs) (eg, http://localhost/users/{guid})
     // tests if UUID was used (bookmarked private url), and restores that session
@@ -201,35 +190,38 @@ module.exports = function(store, strategies, options) {
     //   acheive the same functionality.
     /*
      app.post('/login', function(req, res, next) {
-         passport.authenticate('local', function(err, user, info) {
-            if (err) { return next(err) }
-            if (!user) {
-                req.flash('error', info.message);
-                return res.redirect('/login')
-            }
-            req.logIn(user, function(err) {
-            if (err) { return next(err); }
-                return res.redirect('/users/' + user.username);
-            });
-         })(req, res, next);
+     passport.authenticate('local', function(err, user, info) {
+     if (err) { return next(err) }
+     if (!user) {
+     req.flash('error', info.message);
+     return res.redirect('/login')
+     }
+     req.logIn(user, function(err) {
+     if (err) { return next(err); }
+     return res.redirect('/users/' + user.username);
+     });
+     })(req, res, next);
      });
      */
 
-    expressApp.post('/register', function(req, res){
+    expressApp.post('/register', function(req, res, next){
         var model = req.getModel()
-          , sess = model.session;
+            , sess = model.session;
 
         var q = model.query('users').withUsername(req.body.username);
-        _fetchUser(q, model, done, function(userObj){
-            // if user already registered, return
+        _fetchUser(q, model, function(err, userObj){
+            if (err && !err.notFound) throw new Error(err);
+
+            // current user already registered, return
             if (model.get('users.' + sess.userId + '.auth.local')) return res.redirect('/');
 
             if (userObj) {
-                // user already registered with that name, TODO send error message
+                // a user already registered with that name, TODO send error message
                 return res.redirect(options.failureRedirect);
             } else {
                 // Legit, register
                 model.set('users.' + sess.userId + '.auth.local', req.body);
+                sess.passport.user = sess.userId; // FIXME this isn't the way to do it, use actual passport API
                 return res.redirect('/');
             }
         });
@@ -275,6 +267,33 @@ module.exports = function(store, strategies, options) {
     //        if (req.isAuthenticated()) { return next(); }
     //        res.redirect('/login')
     //    }
+}
 
-    return expressApp;
+/**
+ * Utility functions
+ * -------------------
+ */
+
+function _fetchUser(query, model, callback){
+    model.fetch(query, function(err, users) {
+        // There was a real, server-crashing error
+        if (err) return callback(err);
+
+        // Fetch the user
+        var userObj, u;
+        userObj = users && (u = users.get()) && u.length > 0 && u[0];
+        if (process.env.NODE_ENV!=='production') console.log({err:err, user:userObj});
+
+        // If no user found, return an object which can be used for sending a flash error message
+        if (!userObj) return callback({notFound:true, message:'User not found'});
+
+        // User was found, return it
+        return callback(null, userObj);
+    });
+}
+
+function _loginUser(model, userObj, done) {
+    model.session.userId = userObj.id;
+    // done() sets req.user, which is later referenced to determine _loggedIn
+    if (done) done(null, userObj.id);
 }
