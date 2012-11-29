@@ -132,7 +132,6 @@ function setupMiddleware(strategies, options) {
                         // User exists, but hasn't yet been associated with social network
                         if(err && err.notFound) {
                             var userPath = "users." + model.session.userId;
-                            model.setNull(userPath + '.auth', {});
                             model.set(userPath + '.auth.' + profile.provider, profile);
                             userObj = model.get(userPath);
                         }
