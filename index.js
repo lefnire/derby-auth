@@ -4,7 +4,6 @@ var passport = require('passport')
     , _  = require('underscore')
     , expressApp = require('express')()
     , setupStore = require('./store')
-    , request = require('request')
   ;
 
 /**
