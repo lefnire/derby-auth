@@ -4,6 +4,7 @@ var passport = require('passport')
     , _  = require('underscore')
     , expressApp = require('express')()
     , setupStore = require('./store')
+    , request = require('request')
   ;
 
 /**
@@ -210,7 +211,7 @@ function setupStaticRoutes(expressApp, strategies, options) {
 
         var q = model.query('users').withUsername(req.body.username);
         _fetchUser(q, model, function(err, userObj){
-            if (err && !err.notFound) throw new Error(err);
+            if (err && !err.notFound) return next(err);
 
             // current user already registered, return
             if (model.get('users.' + sess.userId + '.auth.local')) return res.redirect('/');
@@ -221,8 +222,10 @@ function setupStaticRoutes(expressApp, strategies, options) {
             } else {
                 // Legit, register
                 model.set('users.' + sess.userId + '.auth.local', req.body);
-                sess.passport.user = sess.userId; // FIXME this isn't the way to do it, use actual passport API
-                return res.redirect('/');
+                req.login(sess.userId, function(err) {
+                    if (err) { return next(err); }
+                    return res.redirect('/');
+                });
             }
         });
     });
