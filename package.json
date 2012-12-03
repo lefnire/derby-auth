@@ -34,5 +34,8 @@
         "underscore": "*",
         "guid": "*",
         "validator": "*"
+    },
+    "scripts": {
+        "start": "node example/server.js"
     }
 }

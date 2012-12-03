@@ -1,1 +1,31 @@
 <register:>
+    {#with :self}
+        <form id="derby-auth-register" action='/register' method='post'>
+
+            <div class="control-group {#if .errors.username}error{/}">
+                <input type='text' name="username" placeholder="Username" value="{.username}"/>
+                <span class="help-inline">{.errors.username}</span>
+            </div>
+
+            <div class="control-group {#if .errors.email}error{/}">
+                <input type='text' name="email" placeholder="Email" value="{.email}"/>
+                <span class="help-inline">{.errors.email}</span>
+            </div>
+
+            <div class="control-group {#if .errors.emailConfirmation}error{/}">
+                <input type='text' name="email-confirmation" placeholder="Re-Enter Email" value="{.emailConfirmation}"/>
+                <span class="help-inline">{.errors.emailConfirmation}</span>
+            </div>
+
+            <div class="control-group {#if .errors.password}error{/}">
+                <input type='password' name="password" placeholder="Password" value="{.password}"/>
+                <span class="help-inline">{.errors.password}</span>
+            </div>
+
+            {#if .canSubmit}
+                <input type="submit" value="Register" class="btn"/>
+            {else}
+                <input type="submit" value="Register" class="btn disabled" disabled/>
+            {/}
+        </form>
+    {/}

@@ -6,7 +6,7 @@
   "dependencies": {
     "express": "*",
     "gzippo": "*",
-    "derby": "0.3.13",
+    "derby": "git://github.com/lefnire/derby#master",
     "derby-ui-boot": "*",
     "racer-db-mongo": "0.3.13",
     "connect-mongo": ">=0.1.9",

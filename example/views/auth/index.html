@@ -64,18 +64,10 @@
                 <p><span class="label">registration</span><pre class="prettyprint">_user.auth.local.username = {_user.auth.local.username}</pre></p>
             {else}
                 <h2>Login</h2>
-                <form action='/login' method='post'>
-                    <input type='text' name="username" placeholder="Username" />
-                    <input type='password' name="password" placeholder="Password"/>
-                    <div id="submit"><input type="submit" value="Login"/></div>
-                </form>
+                <derby-auth:login />
 
                 <h2>Register</h2>
-                <form action='/register' method='post'>
-                    <input type='text' name="username" placeholder="Username"/>
-                    <input type='password' name="password" placeholder="Password" />
-                    <div id="submit"><input type="submit" value="Register"/></div>
-                </form>
+                <derby-auth:register />
             {/}
         </p>
     </div>
