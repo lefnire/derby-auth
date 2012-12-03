@@ -59,13 +59,16 @@ exports.create = function(model, dom) {
 exports.usernameBlur = function(){
     // check username not already registered
     var model = this.model,
-        rootModel = model.parent().parent(), //TODO is this koshur?
+        rootModel = model.parent().parent(),
         q = rootModel.query('users').withUsername(model.get('username'));
     rootModel.fetch(q, function(err, users) {
-        //TODO throw this, all in catch & custom validation
-        if (err) console.log(err);
-        var userObj = _extractUser(users);
-        if (userObj) model.set('errors.username', 'Username already taken');
+        try {
+            if (err) throw new Error(err);
+            var userObj = _extractUser(users);
+            if (userObj) throw new Error('Username already taken');
+        } catch (err) {
+            model.set('errors.username', err.message);
+        }
     });
 
 }
@@ -76,9 +79,13 @@ exports.emailBlur = function(){
         rootModel = model.parent().parent(),
         q = rootModel.query('users').withEmail(model.get('email'));
     rootModel.fetch(q, function(err, users) {
-        if (err) console.log(err);
-        var userObj = _extractUser(users);
-        if (userObj) model.set('errors.email', 'Email already taken');
+        try {
+            if (err) throw new Error(err);
+            var userObj = _extractUser(users);
+            if (userObj) throw new Error('Email already taken');
+        } catch (err) {
+            model.set('errors.email', err.message);
+        }
     });
 }
 
