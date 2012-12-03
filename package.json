@@ -1,7 +1,7 @@
 {
     "name": "derby-auth",
     "description": "Provides authentication for DerbyJS projects",
-    "version": "0.0.21",
+    "version": "0.0.22",
     "main": "./index.js",
     "homepage": "https://github.com/lefnire/derby-auth/",
     "repository": {
@@ -32,6 +32,7 @@
         "passport-local": "*",
         "connect-flash": "*",
         "underscore": "*",
-        "guid": "*"
+        "guid": "*",
+        "validator": "*"
     }
 }
