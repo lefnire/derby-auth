@@ -15,6 +15,14 @@ var setupQueries = function(store) {
         return accept(true); // for now
     });
 
+    store.query.expose('users', 'withEmail', function(email) {
+        return this.where('auth.local.email').equals(email);
+    });
+    store.queryAccess('users', 'withEmail', function(methodArgs) {
+        var accept = arguments[arguments.length - 1];
+        return accept(true); // for now
+    });
+
     store.query.expose('users', 'withLogin', function(username, password) {
         return this.where('auth.local.username').equals(username).where('auth.local.password').equals(password);
     });

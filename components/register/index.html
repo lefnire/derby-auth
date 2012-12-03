@@ -3,12 +3,12 @@
         <form id="derby-auth-register" action='/register' method='post'>
 
             <div class="control-group {#if .errors.username}error{/}">
-                <input type='text' name="username" placeholder="Username" value="{.username}"/>
+                <input type='text' name="username" placeholder="Username" x-bind="blur:usernameBlur" value="{.username}"/>
                 <span class="help-inline">{.errors.username}</span>
             </div>
 
             <div class="control-group {#if .errors.email}error{/}">
-                <input type='text' name="email" placeholder="Email" value="{.email}"/>
+                <input type='text' name="email" placeholder="Email" x-bind="blur:emailBlur" value="{.email}"/>
                 <span class="help-inline">{.errors.email}</span>
             </div>
 
