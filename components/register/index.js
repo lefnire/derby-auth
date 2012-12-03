@@ -6,6 +6,7 @@ exports.init = function(model) {
 
 exports.create = function(model, dom) {
     model.on('set', 'username', function(username){
+        if (!username) return
         try {
             check(username).isAlphanumeric();
             model.set('errors.username', '');
@@ -15,6 +16,7 @@ exports.create = function(model, dom) {
     });
 
     model.on('set', 'email', function(email){
+        if (!email) return
         try {
             check(email).isEmail();
             model.set('errors.email', '');
@@ -24,6 +26,7 @@ exports.create = function(model, dom) {
     });
 
     model.on('set', 'emailConfirmation', function(emailConfirmation){
+        if (!emailConfirmation) return
         try {
             check(emailConfirmation).equals(model.get('email'));
             model.set('errors.emailConfirmation', '');
@@ -33,6 +36,7 @@ exports.create = function(model, dom) {
     });
 
     model.on('set', 'password', function(password){
+        if (!password) return
         try {
             check(password).len(6);
             model.set('errors.password', '');
