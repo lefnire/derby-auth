@@ -1,6 +1,14 @@
 <login:>
-    <form action='/login' method='post'>
-        <input type='text' name="username" placeholder="Username" />
-        <input type='password' name="password" placeholder="Password"/>
-        <div id="submit"><input type="submit" value="Login"/></div>
-    </form>
+    {#with :self}
+        <form id="derby-auth-login" action='/login' method='post'>
+            <div class="control-group">
+                <input type='text' name="username" placeholder="Username" />
+            </div>
+
+            <div class="control-group">
+                <input type='password' name="password" placeholder="Password"/>
+            </div>
+
+            <div id="submit"><input type="submit" value="Login" class="btn"/></div>
+        </form>
+    {/}
