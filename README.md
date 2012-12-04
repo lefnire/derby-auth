@@ -33,6 +33,9 @@ Use derby-auth's mounted middleware
 ```
 See the [example](https://github.com/lefnire/derby-auth/tree/master/example) for more details, as well as login / registration forms, sign-in buttons, etc.
 
+## Roadmap
+See my [Workflowy](https://workflowy.com/shared/2a5229b2-64b1-8f5c-e649-4b61c0a1e32a/)
+
 ## Why not EveryAuth?
 This project was originally implemented with Everyauth ([see branch](https://github.com/lefnire/derby-auth/tree/everyauth)), but had some issues:
   1. Every provider had to be implemented individually in code. Passport has an abstraction layer, which is what allows us to pass in Strategy + conf objects in server/index.js for every provider we want enabled.
