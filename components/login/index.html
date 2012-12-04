@@ -1,6 +1,6 @@
 <login:>
     {#with :self}
-        <form id="derby-auth-login" action='/login' method='post' x-bind="submit:loginSubmit">
+        <form id="derby-auth-login" action='/login' method='post'>
 
             <div class="control-group {#if .errors.username}error{/}">
                 <input type='text' name="username" placeholder="Username" x-bind="blur:usernameBlur" value="{.username}"/>

@@ -29,20 +29,5 @@ exports.usernameBlur = function(){
 }
 
 exports.loginSubmit = function(e, el){
-    var model = this.model,
-        rootModel = model.parent().parent(),
-        username = model.get('username'),
-        password = model.get('password'),
-        q = rootModel.query('users').withUsername(username);
-    rootModel.fetch(q, function(err, users) {
-        if (err) return model.set('errors.password', err);
-        var userObj = utils.extractUser(users); // should be legit because already tested in usernameBlur
-        q = model.query('users').withLogin(username, utils.encryptPassword(password, userObj.auth.local.salt));
-        rootModel.fetch(q, function(err, users) {
-            if (err) return model.set('errors.password', err);
-            var userObj = utils.extractUser(users);
-            if (!userObj) return model.set('errors.password', 'Invalid Login.');
-            //TODO then actually submit form
-        });
-    });
+    // TODO handle server-side login failure response message here, via model.set('errors.password',..)
 }
