@@ -93,16 +93,6 @@ var setupAccessControl = function(store) {
     //Callback signatures here have variable length, eg callback(captures..., next);
     //Is using arguments[n] the correct way to handle (typeof this !== "undefined" && this !== null);
 
-    store.readPathAccess('users.*', function() { // captures, next) ->
-        var captures, next;
-        if (!(this.session && this.session.userId)) {
-            return; // https://github.com/codeparty/racer/issues/37
-        }
-        captures = arguments[0];
-        next = arguments[arguments.length - 1];
-        return next(captures === this.session.userId);
-    });
-
     store.writeAccess('*', 'users.*', function() { // captures, value, next) ->
         var captures, next, pathArray;
         if (!(this.session && this.session.userId)) {
