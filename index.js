@@ -4,6 +4,7 @@ var passport = require('passport')
     , _  = require('underscore')
     , expressApp = require('express')()
     , setupStore = require('./store')
+    , utils = require('./utils')
   ;
 
 /**
@@ -97,14 +98,18 @@ function setupMiddleware(strategies, options) {
                 // username, or the password is not correct, set the user to `false` to
                 // indicate failure and set a flash message.  Otherwise, return the
                 // authenticated `user`.
-                var q = model.query('users').withLogin(username, password);
+                var q = model.query('users').withUsername(username);
                 _fetchUser(q, model, function(err, userObj){
-                    // user simply not found, no need to crash the server
-                    if (err && err.notFound) return done(null, false, err);
-                    // there was a real error
-                    if (err) return done(err);
+                    if (err && err.notFound) return done(null, false, err);// user not found
+                    if (err) return done(err); // real error
 
-                    _loginUser(model, userObj, done);
+                    console.log(userObj);
+                    q = model.query('users').withLogin(username, utils.encryptPassword(password, userObj.auth.local.salt));
+                    _fetchUser(q, model, function(err, userObj){
+                        if (err && err.notFound) return done(null, false, err);// user not found
+                        if (err) return done(err); // real error
+                        _loginUser(model, userObj, done);
+                    });
                 });
             }
         ));
@@ -219,7 +224,14 @@ function setupStaticRoutes(expressApp, strategies, options) {
                 return res.redirect(options.failureRedirect);
             } else {
                 // Legit, register
-                model.set('users.' + sess.userId + '.auth.local', req.body);
+                var salt = utils.makeSalt(),
+                    localAuth = {
+                        username: req.body.username,
+                        email: req.body.email,
+                        salt: salt,
+                        hashed_password: utils.encryptPassword(req.body.password, salt)
+                    };
+                model.set('users.' + sess.userId + '.auth.local', localAuth);
                 req.login(sess.userId, function(err) {
                     if (err) { return next(err); }
                     return res.redirect('/');

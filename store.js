@@ -1,3 +1,5 @@
+
+
 var setupQueries = function(store) {
 
     /**
@@ -6,10 +8,9 @@ var setupQueries = function(store) {
     store.query.expose('users', 'withId', function(id) {
         return this
             .byId(id)
-            .except('auth.local.password').limit(1);
+            .except('auth.local.hashed_password').limit(1);
     });
     store.queryAccess('users', 'withId', function(id, next) {
-        console.log(this);
         if (!(this.session && this.session.userId)) {
             return next(false); // https://github.com/codeparty/racer/issues/37
         }
@@ -26,7 +27,7 @@ var setupQueries = function(store) {
         return this
             .where('auth.local.username')
             .equals(username)
-            .only('auth.local.username').limit(1);
+            .except('auth.local.hashed_password').limit(1);
     });
     store.queryAccess('users', 'withUsername', function(methodArgs) {
         var accept = arguments[arguments.length - 1];
@@ -50,12 +51,12 @@ var setupQueries = function(store) {
     /**
      * Find by username and password
      */
-    store.query.expose('users', 'withLogin', function(username, password) {
+    store.query.expose('users', 'withLogin', function(username, hashed_password) {
         return this
             .where('auth.local.username')
             .equals(username)
-            .where('auth.local.password')
-            .equals(password);
+            .where('auth.local.hashed_password')
+            .equals(hashed_password);
 
             // With this enabled, the query finds 0 results. I'm assuming where('..password') and only('..username') conflict.
             // It's ok, they'd have to know both uname & pw to hack this query anyway.
