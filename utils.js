@@ -1,3 +1,5 @@
+// Encryption using http://dailyjs.com/2010/12/06/node-tutorial-5/
+
 var crypto = require('crypto');
 
 module.exports.encryptPassword = function(password, salt) {
