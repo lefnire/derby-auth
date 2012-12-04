@@ -1,14 +1,21 @@
 <login:>
     {#with :self}
-        <form id="derby-auth-login" action='/login' method='post'>
-            <div class="control-group">
-                <input type='text' name="username" placeholder="Username" />
+        <form id="derby-auth-login" action='/login' method='post' x-bind="submit:loginSubmit">
+
+            <div class="control-group {#if .errors.username}error{/}">
+                <input type='text' name="username" placeholder="Username" x-bind="blur:usernameBlur" value="{.username}"/>
+                <span class="help-inline">{.errors.username}</span>
             </div>
 
-            <div class="control-group">
-                <input type='password' name="password" placeholder="Password"/>
+            <div class="control-group {#if .errors.password}error{/}">
+                <input type='password' name="password" placeholder="Password" value="{.password}"/>
+                <span class="help-inline">{.errors.password}</span>
             </div>
 
-            <div id="submit"><input type="submit" value="Login" class="btn"/></div>
+            {#if .canSubmit}
+                <input type="submit" value="Login" class="btn"/>
+            {else}
+                <input type="submit" value="Login" class="btn disabled" disabled/>
+            {/}
         </form>
     {/}

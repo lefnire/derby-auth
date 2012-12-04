@@ -1,5 +1,6 @@
 var check = require('validator').check,
-    sanitize = require('validator').sanitize
+    sanitize = require('validator').sanitize,
+    utils = require('../../utils')
 
 exports.init = function(model) {
 }
@@ -64,13 +65,12 @@ exports.usernameBlur = function(){
     rootModel.fetch(q, function(err, users) {
         try {
             if (err) throw new Error(err);
-            var userObj = _extractUser(users);
+            var userObj = utils.extractUser(users);
             if (userObj) throw new Error('Username already taken');
         } catch (err) {
             model.set('errors.username', err.message);
         }
     });
-
 }
 
 exports.emailBlur = function(){
@@ -81,15 +81,10 @@ exports.emailBlur = function(){
     rootModel.fetch(q, function(err, users) {
         try {
             if (err) throw new Error(err);
-            var userObj = _extractUser(users);
+            var userObj = utils.extractUser(users);
             if (userObj) throw new Error('Email already taken');
         } catch (err) {
             model.set('errors.email', err.message);
         }
     });
-}
-
-function _extractUser(modelAt) {
-    var u;
-    return modelAt && (u = modelAt.get()) && u.length > 0 && u[0];
 }
