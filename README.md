@@ -31,6 +31,13 @@ Use derby-auth's mounted middleware
 .use(auth(store, strategies, options))
 .use(app.router())
 ```
+
+###Step 3 (optional, recommended)
+If you want drop-in Login and Register forms, including form validation, use the `<derby-auth:login />` and `<derby-auth:register />` [components](http://derbyjs.com/#component_libraries). To enable these, you'll need this in your `/lib/app/index.js` file:
+```javascript
+   derby.use(require('derby-auth/components'));
+```
+
 See the [example](https://github.com/lefnire/derby-auth/tree/master/example) for more details, as well as login / registration forms, sign-in buttons, etc.
 
 ## Roadmap
