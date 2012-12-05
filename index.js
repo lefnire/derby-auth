@@ -298,7 +298,7 @@ function _fetchUser(query, model, callback){
         if (process.env.NODE_ENV!=='production') console.log({err:err, user:userObj});
 
         // If no user found, return an object which can be used for sending a flash error message
-        if (!userObj) return callback({notFound:true, message:'User not found'});
+        if (!userObj) return callback({notFound:true, message:'Invalid Login.'});
 
         // User was found, return it
         return callback(null, userObj);
