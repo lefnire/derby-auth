@@ -5,7 +5,6 @@ var passport = require('passport')
     , expressApp = require('express')()
     , setupStore = require('./store')
     , utils = require('./utils')
-    , nodeClone = require('clone')
   ;
 
 /**
