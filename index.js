@@ -60,7 +60,7 @@ function setupMiddleware(strategies, options) {
         // New User - They get to play around before creating a new account.
         if (!sess.userId) {
             sess.userId = model.id();
-            var schema = nodeClone(options.schema);
+            var schema = nodeClone(options.schema, true); // deep
             _.defaults(schema, {auth:{}}); // make sure user schema is defaulted with at least {auth:{}}
             model.set("users." + sess.userId, schema);
         }
