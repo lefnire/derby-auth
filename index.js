@@ -5,6 +5,7 @@ var passport = require('passport')
     , expressApp = require('express')()
     , setupStore = require('./store')
     , utils = require('./utils')
+    , nodeClone = require('clone')
   ;
 
 /**
@@ -59,8 +60,9 @@ function setupMiddleware(strategies, options) {
         // New User - They get to play around before creating a new account.
         if (!sess.userId) {
             sess.userId = model.id();
-            _.defaults(options.schema, {auth:{}}); // make sure user schema is defaulted with at least {auth:{}}
-            model.set("users." + sess.userId, options.schema);
+            var schema = nodeClone(options.schema);
+            _.defaults(schema, {auth:{}}); // make sure user schema is defaulted with at least {auth:{}}
+            model.set("users." + sess.userId, schema);
         }
 
         // Passport session setup.

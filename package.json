@@ -33,7 +33,8 @@
         "connect-flash": "*",
         "underscore": "*",
         "guid": "*",
-        "validator": "*"
+        "validator": "*",
+        "clone": "*"
     },
     "scripts": {
         "start": "node example/server.js"
