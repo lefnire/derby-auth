@@ -31,10 +31,9 @@
         "passport": "*",
         "passport-local": "*",
         "connect-flash": "*",
-        "underscore": "*",
+        "lodash": "*",
         "guid": "*",
-        "validator": "*",
-        "clone": "*"
+        "validator": "*"
     },
     "scripts": {
         "start": "node example/server.js"

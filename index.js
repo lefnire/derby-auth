@@ -1,7 +1,7 @@
 var passport = require('passport')
     , LocalStrategy = require('passport-local').Strategy
     , flash = require('connect-flash') // used for setting error messages
-    , _  = require('underscore')
+    , _  = require('lodash')
     , expressApp = require('express')()
     , setupStore = require('./store')
     , utils = require('./utils')
@@ -60,7 +60,7 @@ function setupMiddleware(strategies, options) {
         // New User - They get to play around before creating a new account.
         if (!sess.userId) {
             sess.userId = model.id();
-            var schema = nodeClone(options.schema, true); // deep
+            var schema = _.cloneDeep(options.schema);
             _.defaults(schema, {auth:{}}); // make sure user schema is defaulted with at least {auth:{}}
             model.set("users." + sess.userId, schema);
         }
