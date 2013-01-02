@@ -139,6 +139,7 @@ function setupMiddleware(strategies, options) {
                         if(err && err.notFound) {
                             var userPath = "users." + model.session.userId;
                             model.set(userPath + '.auth.' + profile.provider, profile);
+                            model.set(userPath + '.auth.timestamps.created', new Date());
                             userObj = model.get(userPath);
                         }
                         _loginUser(model, userObj, done);
@@ -234,6 +235,7 @@ function setupStaticRoutes(expressApp, strategies, options) {
                         hashed_password: utils.encryptPassword(req.body.password, salt)
                     };
                 model.set('users.' + sess.userId + '.auth.local', localAuth);
+                model.set('users.' + sess.userId + '.auth.timestamps.created', new Date());
                 req.login(sess.userId, function(err) {
                     if (err) { return next(err); }
                     return res.redirect('/');
@@ -309,6 +311,7 @@ function _fetchUser(query, model, callback){
 
 function _loginUser(model, userObj, done) {
     model.session.userId = userObj.id;
+    model.set('users.' + userObj.id + '.auth.timestamps.loggedin', new Date());
     // done() sets req.user, which is later referenced to determine _loggedIn
     if (done) done(null, userObj.id);
 }
