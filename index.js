@@ -274,6 +274,31 @@ function setupStaticRoutes(expressApp, strategies, options) {
         res.redirect('/');
     });
 
+    expressApp.post('/password-reset', function(req, res){
+//        console.log(req);
+        var model = req.getModel(),
+            email = req.body.email,
+            salt = utils.makeSalt(),
+            newPassword =  utils.makeSalt(), // use a salt as the new password too (they'll change it later)
+            hashed_password = utils.encryptPassword(newPassword, salt);
+
+        model.fetch(model.query('users').withEmail(email), function(err, users){
+            var id, path;
+            try{
+                id = users.get()[0].id;
+                path = 'users.' + id + '.local';
+            } catch(e) {
+                console.log({tylerError:e});
+                return res.send(500, e);
+            }
+            model.set(path + '.salt', salt);
+            model.set(path + '.hashed_password', hashed_password);
+            //TODO send email
+            return res.send('New password sent to '+ email);
+        })
+
+    })
+
     // Simple route middleware to ensure user is authenticated.
     //   Use this route middleware on any resource that needs to be protected.  If
     //   the request is authenticated (typically via a persistent login session),

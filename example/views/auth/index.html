@@ -63,11 +63,14 @@
             {#if _user.auth.local}
                 <p><span class="label">registration</span><pre class="prettyprint">_user.auth.local.username = {_user.auth.local.username}</pre></p>
             {else}
-                <h2>Login</h2>
-                <derby-auth:login />
-
-                <h2>Register</h2>
-                <derby-auth:register />
+                <boot:tabs>
+                    <boot:tab title="Login">
+                        <derby-auth:login />
+                    </boot:tab>
+                    <boot:tab title="Register">
+                        <derby-auth:register />
+                    </boot:tab>
+                </boot:tabs>
             {/}
         </p>
     </div>
