@@ -32,6 +32,17 @@ Use derby-auth's mounted middleware
 .use(app.router())
 ```
 
+Also, *make sure* your express app is using sessions:
+```javascript
+# Uncomment and supply secret to add Derby session handling
+# Derby session middleware creates req.session and socket.io sessions
+.use(express.cookieParser())
+.use(store.sessionMiddleware
+  secret: process.env.SESSION_SECRET || 'YOUR SECRET HERE'
+  cookie: {maxAge: ONE_YEAR}
+)
+```
+
 ###Step 3 (optional, recommended)
 If you want drop-in Login and Register forms, including form validation, use the `<derby-auth:login />` and `<derby-auth:register />` [components](http://derbyjs.com/#component_libraries). To enable these, you'll need this in your `/lib/app/index.js` file:
 ```javascript
