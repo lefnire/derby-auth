@@ -275,7 +275,6 @@ function setupStaticRoutes(expressApp, strategies, options) {
     });
 
     expressApp.post('/password-reset', function(req, res){
-//        console.log(req);
         var model = req.getModel(),
             email = req.body.email,
             salt = utils.makeSalt(),
@@ -283,18 +282,24 @@ function setupStaticRoutes(expressApp, strategies, options) {
             hashed_password = utils.encryptPassword(newPassword, salt);
 
         model.fetch(model.query('users').withEmail(email), function(err, users){
-            var id, path;
-            try{
-                id = users.get()[0].id;
-                path = 'users.' + id + '.local';
-            } catch(e) {
-                console.log({tylerError:e});
+            if (!err && !(users.get()[0])) err = "Somethign went wrong resetting password for " + email + ". Couldn't find user for some reason.";
+            if (err) {
+                console.log(err);
                 return res.send(500, e);
             }
-            model.set(path + '.salt', salt);
-            model.set(path + '.hashed_password', hashed_password);
-            //TODO send email
-            return res.send('New password sent to '+ email);
+
+            // we use mongoskin to bypass racer's accessConrol settings where we're authorized.
+            // TODO come up with a different accessControl approach, this shouldn't be necessary
+            var mongo = require('mongoskin');
+            mongo.db(process.env.NODE_DB_URI)
+                .collection('users')
+                .update({'auth.local.email': email}, {salt:salt, hashed_password:hashed_password}, function (err, items) {
+                    console.dir({err:err, items:items});
+                    if (err) return res.send(500, err);
+                    //TODO send email
+                    return res.send('New password sent to '+ email);
+            })
+
         })
 
     })

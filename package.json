@@ -33,6 +33,7 @@
         "connect-flash": "*",
         "lodash": "*",
         "guid": "*",
+        "mongoskin": "*",
         "validator": "*"
     },
     "scripts": {

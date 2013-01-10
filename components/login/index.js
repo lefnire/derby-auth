@@ -57,8 +57,8 @@ exports.submitPasswordReset = function() {
                     data: {
                         email: model.get('passwordResetEmail')
                     },
-                    success: function(data){
-                        model.set('success.passwordReset', data.responseText)
+                    success: function(response){
+                        model.set('success.passwordReset', response);
                     },
                     error: function(e) {
                         console.log(e);

@@ -21,6 +21,7 @@
 
         <a x-bind="click:showPasswordReset">Forgot Password</a>
         <form id="derby-auth-password-reset" x-bind="submit:submitPasswordReset" method='post' style='display:none;' class='well'>
+            <h3>Email New Password</h3>
 
             <div class="alert alert-success">{.success.passwordReset}</div>
 
@@ -29,6 +30,6 @@
                 <span class="help-inline">{.errors.passwordReset}</span>
             </div>
 
-            <input type="submit" value="Login" class="btn"/>
+            <input type="submit" value="Submit" class="btn"/>
         </form>
     {/}
