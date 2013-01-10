@@ -282,7 +282,7 @@ function setupStaticRoutes(expressApp, strategies, options) {
             hashed_password = utils.encryptPassword(newPassword, salt);
 
         model.fetch(model.query('users').withEmail(email), function(err, users){
-            if (!err && !(users.get()[0])) err = "Somethign went wrong resetting password for " + email + ". Couldn't find user for some reason.";
+            if (!err && !(users.get()[0])) err = "Something went wrong resetting password for " + email + ". Couldn't find user for some reason.";
             if (err) {
                 console.log(err);
                 return res.send(500, e);
@@ -307,8 +307,8 @@ function setupStaticRoutes(expressApp, strategies, options) {
             })
 
         })
-
     })
+
 
     // Simple route middleware to ensure user is authenticated.
     //   Use this route middleware on any resource that needs to be protected.  If
@@ -357,7 +357,7 @@ function sendEmail(mailData) {
     // create reusable transport method (opens pool of SMTP connections)
     // TODO derby-auth isn't currently configurable here, if you need customizations please send pull request
     var smtpTransport = nodemailer.createTransport("SMTP",{
-        service: process.env.SMTP_SERVICE,
+        service: process.env.SMTP_SERVICE || "Gmail",
         auth: {
             user: process.env.SMTP_USER,
             pass: process.env.SMTP_PASS
