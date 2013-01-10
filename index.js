@@ -296,7 +296,12 @@ function setupStaticRoutes(expressApp, strategies, options) {
                 .update({'auth.local.email': email}, {salt:salt, hashed_password:hashed_password}, function (err, items) {
                     console.dir({err:err, items:items});
                     if (err) return res.send(500, err);
-                    //TODO send email
+                    sendEmail({
+                        from: "HabitRPG <admin@habitrpg.com>",
+                        to: email,
+                        subject: "Password Reset for HabitRPG",
+                        text: "Your new password is " + newPassword + ". You an login at https://habitrpg.com"
+                    });
                     return res.send('New password sent to '+ email);
             })
 
@@ -343,4 +348,29 @@ function _loginUser(model, userObj, done) {
     model.set('users.' + userObj.id + '.auth.timestamps.loggedin', new Date());
     // done() sets req.user, which is later referenced to determine _loggedIn
     if (done) done(null, userObj.id);
+}
+
+function sendEmail(mailData) {
+    var nodemailer = require("nodemailer");
+
+    // create reusable transport method (opens pool of SMTP connections)
+    // TODO derby-auth isn't currently configurable here, if you need customizations please send pull request
+    var smtpTransport = nodemailer.createTransport("SMTP",{
+        service: process.env.SMTP_SERVICE,
+        auth: {
+            user: process.env.SMTP_USER,
+            pass: process.env.SMTP_PASS
+        }
+    });
+
+    // send mail with defined transport object
+    smtpTransport.sendMail(mailData, function(error, response){
+        if(error){
+            console.log(error);
+        }else{
+            console.log("Message sent: " + response.message);
+        }
+
+        smtpTransport.close(); // shut down the connection pool, no more messages
+    });
 }
