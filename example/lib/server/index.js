@@ -6,16 +6,14 @@ var http = require('http')
   , app = require('../auth')
   , serverError = require('./serverError')
   , MongoStore = require('connect-mongo')(express)
-
-// set globally accessible db uri (needed by main index.js)
-process.env.NODE_DB_URI = 'mongodb://localhost/derby-auth';
+  , dbUri = 'mongodb://localhost/derby-auth';
 
 var expressApp = express(),
     server = http.createServer(expressApp)
 
 derby.use(require('racer-db-mongo'));
 var store = derby.createStore({
-  db: { type: 'Mongo', uri: process.env.NODE_DB_URI },
+  db: { type: 'Mongo', uri: dbUri },
   listen: server
 });
 
@@ -86,7 +84,7 @@ expressApp
     .use(store.sessionMiddleware({
         secret: process.env.SESSION_SECRET || 'YOUR SECRET HERE',
         cookie: {maxAge: ONE_YEAR},
-        store: new MongoStore({ url: process.env.NODE_DB_URI })
+        store: new MongoStore({ url: dbUri })
     }))
     .use(store.modelMiddleware())
 

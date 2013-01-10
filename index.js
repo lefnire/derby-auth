@@ -291,7 +291,7 @@ function setupStaticRoutes(expressApp, strategies, options) {
             // we use mongoskin to bypass racer's accessConrol settings where we're authorized.
             // TODO come up with a different accessControl approach, this shouldn't be necessary
             var mongo = require('mongoskin');
-            mongo.db(process.env.NODE_DB_URI).collection('users').update(
+            mongo.db(model.store._db.options.uri).collection('users').update(
                 {"auth.local.email": email},
                 {$set: {'auth.local.salt': salt, 'auth.local.hashed_password': hashed_password} },
                 function (err, items) {
