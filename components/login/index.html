@@ -1,5 +1,7 @@
 <login:>
     {#with :self}
+
+        <!-- Login Form -->
         <form id="derby-auth-login" action='/login' method='post'>
 
             <div class="control-group {#if .errors.username}error{/}">
@@ -19,6 +21,7 @@
             {/}
         </form>
 
+        <!-- Forgot Password Link -->
         <a x-bind="click:showPasswordReset">Forgot Password</a>
         <form id="derby-auth-password-reset" x-bind="submit:submitPasswordReset" method='post' style='display:none;' class='well'>
             <h3>Email New Password</h3>

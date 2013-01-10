@@ -59,9 +59,10 @@
             <a class="btn" href='/auth/twitter'>Twitter</a>
         {/}
 
-        <p>
+        <div class='well'>
             {#if _user.auth.local}
                 <p><span class="label">registration</span><pre class="prettyprint">_user.auth.local.username = {_user.auth.local.username}</pre></p>
+                <derby-auth:account />
             {else}
                 <boot:tabs>
                     <boot:tab title="Login">
@@ -72,5 +73,5 @@
                     </boot:tab>
                 </boot:tabs>
             {/}
-        </p>
+        </div>
     </div>
