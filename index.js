@@ -104,7 +104,7 @@ function setupMiddleware(strategies, options) {
                     if (err && err.notFound) return done(null, false, err);// user not found
                     if (err) return done(err); // real error
 
-                    console.log(userObj);
+                    if(process.env.NODE_ENV==='development') console.log(userObj);
                     q = model.query('users').withLogin(username, utils.encryptPassword(password, userObj.auth.local.salt));
                     _fetchUser(q, model, function(err, userObj){
                         if (err && err.notFound) return done(null, false, err);// user not found
