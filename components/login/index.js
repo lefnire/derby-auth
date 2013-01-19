@@ -20,11 +20,9 @@ exports.usernameBlur = function(){
             if (!userObj) {
                 throw new Error('Username not registered.');
             } else {
-                model.set('canSubmit', true);
                 model.set('errors.username', '');
             }
         } catch (err) {
-            model.set('canSubmit', false);
             model.set('errors.username', err.message);
         }
     });

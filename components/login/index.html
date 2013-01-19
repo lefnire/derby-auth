@@ -12,11 +12,7 @@
                 <span class="help-inline">{.errors.password}</span>
             </div>
 
-            {#if .canSubmit}
-                <input type="submit" value="Login" class="btn"/>
-            {else}
-                <input type="submit" value="Login" class="btn disabled" disabled/>
-            {/}
+            <input type="submit" value="Login" class="btn"/>
         </form>
 
         <a x-bind="click:showPasswordReset">Forgot Password</a>
