@@ -7,8 +7,10 @@ var setupQueries = function(store) {
      */
     store.query.expose('users', 'withId', function(id) {
         return this
-            .byId(id)
-            .except('auth.local.hashed_password').limit(1);
+            .where('id')
+            .equals(id)
+            .except('auth.local.hashed_password')
+            .limit(1);
     });
     store.queryAccess('users', 'withId', function(id, next) {
         if (!(this.session && this.session.userId)) {
