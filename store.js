@@ -9,7 +9,7 @@ var setupQueries = function(store) {
         return this
             .where('id')
             .equals(id)
-            .except('auth.local.hashed_password')
+            //.except('auth.local.hashed_password')
             .limit(1);
     });
     store.queryAccess('users', 'withId', function(id, next) {
