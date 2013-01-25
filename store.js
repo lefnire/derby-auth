@@ -96,24 +96,25 @@ var setupAccessControl = function(store) {
     //Is using arguments[n] the correct way to handle (typeof this !== "undefined" && this !== null);
 
     store.readPathAccess('users.*', function() { // captures, next) ->
-        var captures, next;
         if (!(this.session && this.session.userId)) {
             return; // https://github.com/codeparty/racer/issues/37
         }
-        captures = arguments[0];
-        next = arguments[arguments.length - 1];
-        return next(captures === this.session.userId);
+        var captures = arguments[0],
+            next = arguments[arguments.length - 1],
+            sameSession = captures === this.session.userId,
+            isServer = !this.req.socket;
+        return next(sameSession || isServer);
     });
 
     store.writeAccess('*', 'users.*', function() { // captures, value, next) ->
-        var captures, next, pathArray;
         if (!(this.session && this.session.userId)) {
-            return;
+            return; // https://github.com/codeparty/racer/issues/37
         }
-        captures = arguments[0];
-        next = arguments[arguments.length - 1];
-        pathArray = captures.split('.');
-        return next(pathArray[0] === this.session.userId);
+        var captures = arguments[0],
+            next = arguments[arguments.length - 1],
+            sameSession = captures.split('.')[0] === this.session.userId,
+            isServer = !this.req.socket;
+        return next(sameSession || isServer);
     });
 };
 
