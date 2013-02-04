@@ -35,7 +35,8 @@
         "guid": "*",
         "mongoskin": "*",
         "nodemailer": "*",
-        "validator": "*"
+        "validator": "*",
+        "express": "*"
     },
     "scripts": {
         "start": "node example/server.js"
