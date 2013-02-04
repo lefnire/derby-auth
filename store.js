@@ -102,7 +102,7 @@ var setupAccessControl = function(store) {
         var captures = arguments[0],
             next = arguments[arguments.length - 1],
             sameSession = captures === this.session.userId,
-            isServer = !this.req.socket;
+            isServer = false;//!this.req.socket; //TODO how to determine if request came from server, as in REST?
         return next(sameSession || isServer);
     });
 
@@ -113,7 +113,7 @@ var setupAccessControl = function(store) {
         var captures = arguments[0],
             next = arguments[arguments.length - 1],
             sameSession = captures.split('.')[0] === this.session.userId,
-            isServer = !this.req.socket;
+            isServer = false;//!this.req.socket;
         return next(sameSession || isServer);
     });
 };
