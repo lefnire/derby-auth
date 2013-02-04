@@ -126,10 +126,10 @@ function setupMiddleware(strategies, options) {
             //   credentials (in this case, an accessToken, refreshToken, and Facebook
             //   profile), and invoke a callback with a user object.
             passport.use(new obj.strategy(obj.conf, function(accessToken, refreshToken, profile, done) {
-                    // To keep the example simple, the user's Facebook profile is returned to
-                    // represent the logged-in user.  In a typical application, you would want
-                    // to associate the Facebook account with a user record in your database,
-                    // and return that user instead.
+
+                    // If facebook user exists, log that person in. If not, associate facebook user
+                    // with currently "staged" user account - then log them in
+
                     var providerQ = model.query('users').withProvider(profile.provider, profile.id),
                         currentUserQ = "users." + model.session.userId;
 
@@ -141,7 +141,7 @@ function setupMiddleware(strategies, options) {
                             currentUser.set('auth.' + profile.provider, profile);
                             currentUser.set('auth.timestamps.created', +new Date);
                             userObj = currentUser.get()
-                            if (!userObj) return done("Something went wrong trying to tie #{profile.provider} account to staged user")
+                            if (!userObj && !userObj.id) return done("Something went wrong trying to tie #{profile.provider} account to staged user")
                         }
 
                         // User was found, log in
