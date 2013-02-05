@@ -1,6 +1,6 @@
 
 
-var setupQueries = function(store) {
+var setupQueries = function(store, customAcessControl) {
 
     /**
      * Main function for subscribing to user query
@@ -88,37 +88,44 @@ var setupQueries = function(store) {
 /**
  * Setup read / write access
  * @param store
+ * @param {customAccessControl} allows you to setup your own readPathAccess and writeAccess. If not passed in,
+ *  the default of "user can only read and write anything to self" use used
  */
-var setupAccessControl = function(store) {
+var setupAccessControl = function(store, customAccessControl) {
     store.accessControl = true;
 
-    //Callback signatures here have variable length, eg callback(captures..., next);
-    //Is using arguments[n] the correct way to handle (typeof this !== "undefined" && this !== null);
+    if(!!customAccessControl) {
+        customAccessControl(store);
+    } else {
+        //Callback signatures here have variable length, eg callback(captures..., next);
+        //Is using arguments[n] the correct way to handle (typeof this !== "undefined" && this !== null);
 
-    store.readPathAccess('users.*', function() { // captures, next) ->
-        if (!(this.session && this.session.userId)) {
-            return; // https://github.com/codeparty/racer/issues/37
-        }
-        var captures = arguments[0],
-            next = arguments[arguments.length - 1],
-            sameSession = captures === this.session.userId,
-            isServer = false;//!this.req.socket; //TODO how to determine if request came from server, as in REST?
-        return next(sameSession || isServer);
-    });
+        store.readPathAccess('users.*', function() { // captures, next) ->
+            if (!(this.session && this.session.userId)) {
+                return; // https://github.com/codeparty/racer/issues/37
+            }
+            var captures = arguments[0],
+                next = arguments[arguments.length - 1],
+                sameSession = captures === this.session.userId,
+                isServer = false;//!this.req.socket; //TODO how to determine if request came from server, as in REST?
+            return next(sameSession || isServer);
+        });
 
-    store.writeAccess('*', 'users.*', function() { // captures, value, next) ->
-        if (!(this.session && this.session.userId)) {
-            return; // https://github.com/codeparty/racer/issues/37
-        }
-        var captures = arguments[0],
-            next = arguments[arguments.length - 1],
-            sameSession = captures.split('.')[0] === this.session.userId,
-            isServer = false;//!this.req.socket;
-        return next(sameSession || isServer);
-    });
+        store.writeAccess('*', 'users.*', function() { // captures, value, next) ->
+            if (!(this.session && this.session.userId)) {
+                return; // https://github.com/codeparty/racer/issues/37
+            }
+            var captures = arguments[0],
+                next = arguments[arguments.length - 1],
+                sameSession = captures.split('.')[0] === this.session.userId,
+                isServer = false;//!this.req.socket;
+            return next(sameSession || isServer);
+        });
+    }
+
 };
 
-module.exports = function(store) {
+module.exports = function(store, customAccessControl) {
     setupQueries(store);
-    setupAccessControl(store);
+    setupAccessControl(store, customAccessControl);
 };
