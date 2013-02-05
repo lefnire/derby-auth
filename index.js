@@ -16,7 +16,7 @@ var passport = require('passport')
 module.exports = function(store, strategies, options) {
 
     // Setup queries & accessControl
-    setupStore(store);
+    setupStore(store, options.customAccessControl);
 
     // Setup default options
     _.defaults(options, {
@@ -48,6 +48,8 @@ module.exports = function(store, strategies, options) {
  */
 function setupMiddleware(strategies, options) {
     return function(req, res, next) {
+        if (req.is('json')) return next() // don't create new users / authenticate on REST calls
+
         var model = req.getModel()
             , sess = model.session;
 
