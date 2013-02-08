@@ -12,7 +12,7 @@ var setupQueries = function(store, customAcessControl) {
             //.except('auth.local.hashed_password')
             .limit(1);
     });
-    store.queryAccess('users', 'withId', function(id, next, onErr) {
+    store.queryAccess('users', 'withId', function(id, next) {
         if (!(this.session && this.session.userId)) {
             return next(false); // https://github.com/codeparty/racer/issues/37
         }
@@ -65,7 +65,7 @@ var setupQueries = function(store, customAcessControl) {
             //.only('auth.local.username').limit(1);
     });
     store.queryAccess('users', 'withLogin', function(methodArgs) {
-        var accept = arguments[arguments.length - 2];
+        var accept = arguments[arguments.length - 1];
         return accept(true); // for now
     });
 
@@ -92,9 +92,7 @@ var setupQueries = function(store, customAcessControl) {
  *  the default of "user can only read and write anything to self" use used
  */
 var setupAccessControl = function(store, customAccessControl) {
-    store.accessControl.readPath = true; // false by default
-    store.accessControl.query    = true; // false by default
-    store.accessControl.write    = true; // false by default
+    store.accessControl = true;
 
     if(!!customAccessControl) {
         customAccessControl(store);
@@ -102,23 +100,23 @@ var setupAccessControl = function(store, customAccessControl) {
         //Callback signatures here have variable length, eg callback(captures..., next);
         //Is using arguments[n] the correct way to handle (typeof this !== "undefined" && this !== null);
 
-        store.readPathAccess('users.*', function() { // captures, next, onErr) ->
+        store.readPathAccess('users.*', function() { // captures, next) ->
             if (!(this.session && this.session.userId)) {
                 return; // https://github.com/codeparty/racer/issues/37
             }
             var captures = arguments[0],
-                next = arguments[arguments.length - 2],
+                next = arguments[arguments.length - 1],
                 sameSession = captures === this.session.userId,
                 isServer = false;//!this.req.socket; //TODO how to determine if request came from server, as in REST?
             return next(sameSession || isServer);
         });
 
-        store.writeAccess('*', 'users.*', function() { // captures, value, next, onErr) ->
+        store.writeAccess('*', 'users.*', function() { // captures, value, next) ->
             if (!(this.session && this.session.userId)) {
                 return; // https://github.com/codeparty/racer/issues/37
             }
             var captures = arguments[0],
-                next = arguments[arguments.length - 2],
+                next = arguments[arguments.length - 1],
                 sameSession = captures.split('.')[0] === this.session.userId,
                 isServer = false;//!this.req.socket;
             return next(sameSession || isServer);
