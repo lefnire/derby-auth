@@ -31,8 +31,7 @@ var setupQueries = function(store, customAcessControl) {
             .equals(username)
             .except('auth.local.hashed_password').limit(1);
     });
-    store.queryAccess('users', 'withUsername', function(methodArgs) {
-        var accept = arguments[arguments.length - 1];
+    store.queryAccess('users', 'withUsername', function(role,accept,err) {
         return accept(true); // for now
     });
 
@@ -45,8 +44,7 @@ var setupQueries = function(store, customAcessControl) {
             .equals(email)
             .only('auth.local.email').limit(1);
     });
-    store.queryAccess('users', 'withEmail', function(methodArgs) {
-        var accept = arguments[arguments.length - 1];
+    store.queryAccess('users', 'withEmail', function(role,accept,err) {
         return accept(true); // for now
     });
 
@@ -64,8 +62,7 @@ var setupQueries = function(store, customAcessControl) {
             // It's ok, they'd have to know both uname & pw to hack this query anyway.
             //.only('auth.local.username').limit(1);
     });
-    store.queryAccess('users', 'withLogin', function(methodArgs) {
-        var accept = arguments[arguments.length - 1];
+    store.queryAccess('users', 'withLogin', function(role,accept,err) {
         return accept(true); // for now
     });
 
@@ -78,8 +75,7 @@ var setupQueries = function(store, customAcessControl) {
             .equals(id)
             .only("auth." + provider + ".id").limit(1);
     });
-    store.queryAccess('users', 'withProvider', function(methodArgs) {
-        var accept = arguments[arguments.length - 1];
+    store.queryAccess('users', 'withProvider', function(role,accept,err) {
         return accept(true); // for now
     });
 };
