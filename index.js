@@ -133,16 +133,17 @@ function setupMiddleware(strategies, options) {
                     // with currently "staged" user account - then log them in
 
                     var providerQ = model.query('users').withProvider(profile.provider, profile.id),
-                        currentUserQ = "users." + model.session.userId;
+                        currentUserQ = model.query('users').withId(model.session.userId);
 
                     model.fetch(providerQ, currentUserQ, function(err, providerUser, currentUser) {
                         if (err) return done(err);
 
                         var userObj = providerUser.at(0).get()
                         if (!userObj) {
-                            currentUser.set('auth.' + profile.provider, profile);
-                            currentUser.set('auth.timestamps.created', +new Date);
-                            userObj = currentUser.get()
+                            var currentUserObj = currentUser.at(0);
+                            currentUserObj.set('auth.' + profile.provider, profile);
+                            currentUserObj.set('auth.timestamps.created', +new Date);
+                            userObj = currentUserObj.get();
                             if (!userObj && !userObj.id) return done("Something went wrong trying to tie #{profile.provider} account to staged user")
                         }
 
