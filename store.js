@@ -31,7 +31,7 @@ var setupQueries = function(store, customAcessControl) {
             .equals(username)
             .except('auth.local.hashed_password').limit(1);
     });
-    store.queryAccess('users', 'withUsername', function(username,accept,err) {
+    store.queryAccess('users', 'withUsername', function(username, accept, err) {
         return accept(true); // for now
     });
 
@@ -44,7 +44,7 @@ var setupQueries = function(store, customAcessControl) {
             .equals(email)
             .only('auth.local.email').limit(1);
     });
-    store.queryAccess('users', 'withEmail', function(email,accept,err) {
+    store.queryAccess('users', 'withEmail', function(email, accept, err) {
         return accept(true); // for now
     });
 

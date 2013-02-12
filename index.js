@@ -140,10 +140,10 @@ function setupMiddleware(strategies, options) {
 
                         var userObj = providerUser.at(0).get()
                         if (!userObj) {
-                            var currentUserObj = currentUser.at(0);
-                            currentUserObj.set('auth.' + profile.provider, profile);
-                            currentUserObj.set('auth.timestamps.created', +new Date);
-                            userObj = currentUserObj.get();
+                            var currentUserScope = currentUser.at(0);
+                            currentUserScope.set('auth.' + profile.provider, profile);
+                            currentUserScope.set('auth.timestamps.created', +new Date);
+                            userObj = currentUserScope.get();
                             if (!userObj && !userObj.id) return done("Something went wrong trying to tie #{profile.provider} account to staged user")
                         }
 
