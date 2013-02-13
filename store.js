@@ -103,10 +103,10 @@ var setupAccessControl = function(store, customAccessControl) {
                 return; // https://github.com/codeparty/racer/issues/37
             }
             var captures = arguments[0],
-                next = arguments[arguments.length - 1],
+                accept = arguments[arguments.length - 2],
                 sameSession = captures === this.session.userId,
                 isServer = false;//!this.req.socket; //TODO how to determine if request came from server, as in REST?
-            return next(sameSession || isServer);
+            return accept(sameSession || isServer);
         });
 
         store.writeAccess('*', 'users.*', function() { // captures, value, next) ->
@@ -114,10 +114,10 @@ var setupAccessControl = function(store, customAccessControl) {
                 return; // https://github.com/codeparty/racer/issues/37
             }
             var captures = arguments[0],
-                next = arguments[arguments.length - 1],
+                accept = arguments[arguments.length - 2],
                 sameSession = captures.split('.')[0] === this.session.userId,
                 isServer = false;//!this.req.socket;
-            return next(sameSession || isServer);
+            return accept(sameSession || isServer);
         });
     }
 
