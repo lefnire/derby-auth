@@ -88,7 +88,9 @@ var setupQueries = function(store, customAcessControl) {
  *  the default of "user can only read and write anything to self" use used
  */
 var setupAccessControl = function(store, customAccessControl) {
-    store.accessControl = true;
+    store.accessControl.readPath = true;
+    store.accessControl.query    = true;
+    store.accessControl.write    = true;
 
     if(!!customAccessControl) {
         customAccessControl(store);
