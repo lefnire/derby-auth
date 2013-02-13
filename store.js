@@ -12,11 +12,11 @@ var setupQueries = function(store, customAcessControl) {
             //.except('auth.local.hashed_password')
             .limit(1);
     });
-    store.queryAccess('users', 'withId', function(id, next) {
+    store.queryAccess('users', 'withId', function(id, accept, err) {
         if (!(this.session && this.session.userId)) {
-            return next(false); // https://github.com/codeparty/racer/issues/37
+            return accept(false); // https://github.com/codeparty/racer/issues/37
         }
-        return next(id === this.session.userId);
+        return accept(id === this.session.userId);
     });
 
     // Functions for finding if user exists with given criteria
@@ -31,8 +31,7 @@ var setupQueries = function(store, customAcessControl) {
             .equals(username)
             .except('auth.local.hashed_password').limit(1);
     });
-    store.queryAccess('users', 'withUsername', function(methodArgs) {
-        var accept = arguments[arguments.length - 1];
+    store.queryAccess('users', 'withUsername', function(username, accept, err) {
         return accept(true); // for now
     });
 
@@ -45,8 +44,7 @@ var setupQueries = function(store, customAcessControl) {
             .equals(email)
             .only('auth.local.email').limit(1);
     });
-    store.queryAccess('users', 'withEmail', function(methodArgs) {
-        var accept = arguments[arguments.length - 1];
+    store.queryAccess('users', 'withEmail', function(email, accept, err) {
         return accept(true); // for now
     });
 
@@ -64,8 +62,7 @@ var setupQueries = function(store, customAcessControl) {
             // It's ok, they'd have to know both uname & pw to hack this query anyway.
             //.only('auth.local.username').limit(1);
     });
-    store.queryAccess('users', 'withLogin', function(methodArgs) {
-        var accept = arguments[arguments.length - 1];
+    store.queryAccess('users', 'withLogin', function(username, hashed_password, accept, err) {
         return accept(true); // for now
     });
 
@@ -78,8 +75,7 @@ var setupQueries = function(store, customAcessControl) {
             .equals(id)
             .only("auth." + provider + ".id").limit(1);
     });
-    store.queryAccess('users', 'withProvider', function(methodArgs) {
-        var accept = arguments[arguments.length - 1];
+    store.queryAccess('users', 'withProvider', function(provider, id, accept, err) {
         return accept(true); // for now
     });
 };
