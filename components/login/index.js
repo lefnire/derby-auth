@@ -16,7 +16,7 @@ exports.usernameBlur = function(){
     rootModel.fetch(q, function(err, users) {
         try {
             if (err) throw new Error(err);
-            var userObj = utils.extractUser(users);
+            var userObj = users.at(0).get()
             if (!userObj) {
                 throw new Error('Username not registered.');
             } else {
@@ -44,7 +44,7 @@ exports.submitPasswordReset = function() {
     rootModel.fetch(q, function(err, users) {
         try {
             if (err) throw new Error(err);
-            var userObj = utils.extractUser(users);
+            var userObj = users.at(0).get()
             if (!userObj) {
                 throw new Error('Email not registered.');
             } else {

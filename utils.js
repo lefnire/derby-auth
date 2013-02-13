@@ -12,13 +12,3 @@ module.exports.makeSalt = function() {
     var len = 10;
     return crypto.randomBytes(Math.ceil(len / 2)).toString('hex').substring(0, len);
 }
-
-/**
- * When a query is run against the model, a resultset is returned. This extracts the first object returned
- * @param the query results, a model.at object
- * @return the first user object from the results
- */
-module.exports.extractUser = function(modelAt) {
-    var u;
-    return modelAt && (u = modelAt.get()) && u.length > 0 && u[0];
-}
