@@ -15,9 +15,6 @@ var passport = require('passport')
  */
 module.exports = function(store, strategies, options) {
 
-    // Setup queries & accessControl
-    setupStore(store, options.customAccessControl);
-
     // Setup default options
     _.defaults(options, {
         failureRedirect: '/',
@@ -25,6 +22,9 @@ module.exports = function(store, strategies, options) {
         schema: {},
         allowPurl: false
     });
+
+    // Setup queries & accessControl
+    setupStore(store, options.customAccessControl);
 
     expressApp.use(flash());
 
@@ -113,16 +113,19 @@ function setupPassport(strategies, options) {
             // indicate failure and set a flash message.  Otherwise, return the
             // authenticated `user`.
             var q = model.query('users').withUsername(username);
-            _fetchUser(q, model, function(err, userObj){
-                if (err && err.notFound) return done(null, false, err);// user not found
+            q.fetch(function(err, result1){
                 if (err) return done(err); // real error
+                var u1 = result1.at(0).get()
+                if (!u1) return done(null, false, {message:'User not found with that username.'});// user not found
 
-                if(process.env.NODE_ENV==='development') console.log(userObj);
-                q = model.query('users').withLogin(username, utils.encryptPassword(password, userObj.auth.local.salt));
-                _fetchUser(q, model, function(err, userObj){
-                    if (err && err.notFound) return done(null, false, err);// user not found
+                // We needed the whole user object first so we can get his salt to encrypt password comparison
+                q = model.query('users').withLogin(username, utils.encryptPassword(password, u1.auth.local.salt));
+                q.fetch(function(err, result2){
                     if (err) return done(err); // real error
-                    _loginUser(model, userObj, done);
+                    if(process.env.NODE_ENV==='development') console.log(u2);
+                    var u2 = result2.at(0).get()
+                    if (!u2) return done(null, false, {message:'Password incorrect.'});// user not found
+                    _loginUser(model, u2, done);
                 });
             });
         }
@@ -234,8 +237,10 @@ function setupStaticRoutes(expressApp, strategies, options) {
             , sess = model.session;
 
         var q = model.query('users').withUsername(req.body.username);
-        _fetchUser(q, model, function(err, userObj){
-            if (err && !err.notFound) return next(err);
+        q.fetch(function(err, result){
+            if (err) return next(err)
+
+            var userObj = result.at(0).get();
 
             // current user already registered, return
             if (model.get('users.' + sess.userId + '.auth.local')) return res.redirect('/');
@@ -346,23 +351,6 @@ function setupStaticRoutes(expressApp, strategies, options) {
  * -------------------
  */
 
-function _fetchUser(query, model, callback){
-    model.fetch(query, function(err, users) {
-        // There was a real, server-crashing error
-        if (err) return callback(err);
-
-        // Fetch the user
-        var userObj, u;
-        userObj = users && (u = users.get()) && u.length > 0 && u[0];
-        if (process.env.NODE_ENV!=='production') console.log({err:err, user:userObj});
-
-        // If no user found, return an object which can be used for sending a flash error message
-        if (!userObj) return callback({notFound:true, message:'Invalid Login.'});
-
-        // User was found, return it
-        return callback(null, userObj);
-    });
-}
 
 function _loginUser(model, userObj, done) {
     model.session.userId = userObj.id;
