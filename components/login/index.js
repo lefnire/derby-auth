@@ -18,7 +18,7 @@ exports.usernameBlur = function(){
             if (err) throw new Error(err);
             var userObj = users.at(0).get()
             if (!userObj) {
-                throw new Error('Username not registered.');
+                throw new Error("Username not registered. Make sure you're using the same capitalization you used to register!");
             } else {
                 model.set('errors.username', '');
             }
