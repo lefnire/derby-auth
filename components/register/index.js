@@ -26,13 +26,13 @@ exports.create = function(model, dom) {
         }
     });
 
-    model.on('set', 'emailConfirmation', function(emailConfirmation){
-        if (!emailConfirmation) return
+    model.on('set', 'passwordConfirmation', function(passwordConfirmation){
+        if (!passwordConfirmation) return
         try {
-            check(emailConfirmation).equals(model.get('email'));
-            model.set('errors.emailConfirmation', '');
+            check(passwordConfirmation).equals(model.get('password'));
+            model.set('errors.passwordConfirmation', '');
         } catch (err) {
-            model.set('errors.emailConfirmation', err.message);
+            model.set('errors.passwordConfirmation', err.message);
         }
     });
 
@@ -49,8 +49,8 @@ exports.create = function(model, dom) {
     model.on('set', 'errors.*', function(error){
         var m = model.get(),
             canSubmit = false;
-        if (!m.errors.username && !m.errors.email && !m.errors.emailConfirmation && !m.errors .password &&
-            !!m.username && !!m.email && !!m.emailConfirmation && !!m.password) {
+        if (!m.errors.username && !m.errors.email && !m.errors.passwordConfirmation && !m.errors .password &&
+            !!m.username && !!m.email && !!m.passwordConfirmation && !!m.password) {
             canSubmit = true;
         }
         model.set('canSubmit', canSubmit);

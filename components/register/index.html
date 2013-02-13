@@ -12,14 +12,14 @@
                 <span class="help-inline">{.errors.email}</span>
             </div>
 
-            <div class="control-group {#if .errors.emailConfirmation}error{/}">
-                <input type='text' name="email-confirmation" placeholder="Re-Enter Email" value="{.emailConfirmation}"/>
-                <span class="help-inline">{.errors.emailConfirmation}</span>
-            </div>
-
             <div class="control-group {#if .errors.password}error{/}">
                 <input type='password' name="password" placeholder="Password" value="{.password}"/>
                 <span class="help-inline">{.errors.password}</span>
+            </div>
+
+            <div class="control-group {#if .errors.passwordConfirmation}error{/}">
+                <input type='text' name="password-confirmation" placeholder="Password Confirmation" value="{.passwordConfirmation}"/>
+                <span class="help-inline">{.errors.passwordConfirmation}</span>
             </div>
 
             {#if .canSubmit}
