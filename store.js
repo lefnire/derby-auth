@@ -88,42 +88,44 @@ var setupQueries = function(store, customAcessControl) {
  *  the default of "user can only read and write anything to self" use used
  */
 var setupAccessControl = function(store, customAccessControl) {
-    store.accessControl.readPath = true;
-    store.accessControl.query    = true;
-    store.accessControl.write    = true;
 
-    if(!!customAccessControl) {
-        customAccessControl(store);
-    } else {
-        //Callback signatures here have variable length, eg callback(captures..., next);
-        //Is using arguments[n] the correct way to handle (typeof this !== "undefined" && this !== null);
+    //Callback signatures here have variable length, eg callback(captures..., next);
+    //Is using arguments[n] the correct way to handle (typeof this !== "undefined" && this !== null);
 
-        store.readPathAccess('users.*', function() { // captures, next) ->
-            if (!(this.session && this.session.userId)) {
-                return; // https://github.com/codeparty/racer/issues/37
-            }
-            var captures = arguments[0],
-                accept = arguments[arguments.length - 2],
-                sameSession = captures === this.session.userId,
-                isServer = false;//!this.req.socket; //TODO how to determine if request came from server, as in REST?
-            return accept(sameSession || isServer);
-        });
+    store.readPathAccess('users.*', function() { // captures, next) ->
+        if (!(this.session && this.session.userId)) {
+            return; // https://github.com/codeparty/racer/issues/37
+        }
+        var captures = arguments[0],
+            accept = arguments[arguments.length - 2],
+            sameSession = captures === this.session.userId,
+            isServer = false;//!this.req.socket; //TODO how to determine if request came from server, as in REST?
+        return accept(sameSession || isServer);
+    });
 
-        store.writeAccess('*', 'users.*', function() { // captures, value, next) ->
-            if (!(this.session && this.session.userId)) {
-                return; // https://github.com/codeparty/racer/issues/37
-            }
-            var captures = arguments[0],
-                accept = arguments[arguments.length - 2],
-                sameSession = captures.split('.')[0] === this.session.userId,
-                isServer = false;//!this.req.socket;
-            return accept(sameSession || isServer);
-        });
-    }
+    store.writeAccess('*', 'users.*', function() { // captures, value, next) ->
+        if (!(this.session && this.session.userId)) {
+            return; // https://github.com/codeparty/racer/issues/37
+        }
+        var captures = arguments[0],
+            accept = arguments[arguments.length - 2],
+            sameSession = captures.split('.')[0] === this.session.userId,
+            isServer = false;//!this.req.socket;
+        return accept(sameSession || isServer);
+    });
 
 };
 
 module.exports = function(store, customAccessControl) {
+    store.accessControl.readPath = true;
+    store.accessControl.query    = true;
+    store.accessControl.write    = true;
+
     setupQueries(store);
-    setupAccessControl(store, customAccessControl);
+
+    if(!!customAccessControl) {
+        customAccessControl(store);
+    } else {
+        setupAccessControl(store);
+    }
 };
