@@ -13,7 +13,6 @@ module.exports.store = function(store, customAccessControl) {
 
 /**
  * Provides "mounted" (sub-app) middleware which provides authentication for DerbyJS
- * @param {store} Racer store, used for configuring queries and accessControl
  * @param {strategies} A hash of strategy objects and their configurations. See https://github.com/lefnire/derby-examples/blob/master/authentication/src/server/index.coffee
  * @param {options} TODO document this
  */
