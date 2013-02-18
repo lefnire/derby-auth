@@ -7,13 +7,17 @@ var passport = require('passport')
     , utils = require('./utils')
   ;
 
+module.exports.store = function(store, customAccessControl) {
+    setupStore(store, customAccessControl);
+}
+
 /**
  * Provides "mounted" (sub-app) middleware which provides authentication for DerbyJS
  * @param {store} Racer store, used for configuring queries and accessControl
  * @param {strategies} A hash of strategy objects and their configurations. See https://github.com/lefnire/derby-examples/blob/master/authentication/src/server/index.coffee
  * @param {options} TODO document this
  */
-module.exports = function(store, strategies, options) {
+module.exports.middleware = function(strategies, options) {
 
     // Setup default options
     _.defaults(options, {
@@ -22,9 +26,6 @@ module.exports = function(store, strategies, options) {
         schema: {},
         allowPurl: false
     });
-
-    // Setup queries & accessControl
-    setupStore(store, options.customAccessControl);
 
     expressApp.use(flash());
 
