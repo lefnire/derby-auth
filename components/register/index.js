@@ -1,5 +1,6 @@
-var check = require('validator').check,
-    sanitize = require('validator').sanitize,
+var validator = require('../../node_modules/validator/validator-min'),
+    check = validator.check,
+    sanitize = validator.sanitize,
     utils = require('../../utils')
 
 exports.init = function(model) {
