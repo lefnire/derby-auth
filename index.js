@@ -68,8 +68,6 @@ function setupMiddleware(strategies, options) {
             model.set("users." + sess.userId, schema);
         }
 
-        setupPassport(strategies, options);
-
         return next();
     }
 }
