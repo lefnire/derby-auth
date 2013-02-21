@@ -1,6 +1,10 @@
 /**
  * FIXME https://github.com/codeparty/racer/issues/37
  */
+function sessionInvalidated(guard) {
+    return (!guard || !guard.session || !guard.session.userId)
+}
+var SESSION_INVALIDATED_ERROR = 'Session not found in derby-auth users.withId';
 
 var setupQueries = function(store) {
 
@@ -15,8 +19,8 @@ var setupQueries = function(store) {
             .limit(1);
     });
     store.queryAccess('users', 'withId', function(id, accept, err) {
-        var sess = this.session;
-        return accept(!!sess && !!sess.userId && id === sess.userId);
+        if (sessionInvalidated(this)) return err(SESSION_INVALIDATED_ERROR);
+        accept(id === this.session.userId);
     });
 
     // Functions for finding if user exists with given criteria
@@ -94,20 +98,24 @@ var setupAccessControl = function(store) {
 
     store.readPathAccess('users.*', function() { // captures, next) ->
         var accept = arguments[arguments.length - 2],
-            sess = this.session;
+            err = arguments[arguments.length -1];
+
+        if (sessionInvalidated(this)) return err(SESSION_INVALIDATED_ERROR);
 
         var captures = arguments[0],
-            sameSession = (!!sess && !!sess.userId && captures === sess.userId),
+            sameSession = (captures === this.session.userId),
             isServer = false;//!this.req.socket; //TODO how to determine if request came from server, as in REST?
         return accept(sameSession || isServer);
     });
 
     store.writeAccess('*', 'users.*', function() { // captures, value, next) ->
         var accept = arguments[arguments.length - 2],
-            sess = this.session;
+            err = arguments[arguments.length -1];
+
+        if (sessionInvalidated(this)) return err(SESSION_INVALIDATED_ERROR);
 
         var captures = arguments[0],
-            sameSession = (!!sess && !!sess.userId && captures.split('.')[0] === sess.userId),
+            sameSession = (captures.split('.')[0] === this.session.userId),
             isServer = false;//!this.req.socket;
         return accept(sameSession || isServer);
     });
