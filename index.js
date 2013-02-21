@@ -149,7 +149,7 @@ function setupPassport(strategies, options) {
                 // with currently "staged" user account - then log them in
 
                 var providerQ = model.query('users').withProvider(profile.provider, profile.id),
-                    currentUserQ = model.query('users').withId(model.session.userId);
+                    currentUserQ = model.query('users').withId(model.get('_userId') || model.session.userId);
 
                 model.fetch(providerQ, currentUserQ, function(err, providerUser, currentUser) {
                     if (err) return done(err);
