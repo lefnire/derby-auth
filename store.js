@@ -4,7 +4,7 @@
 function sessionInvalidated(guard) {
     return (!guard || !guard.session || !guard.session.userId)
 }
-var SESSION_INVALIDATED_ERROR = 'Session not found in derby-auth users.withId';
+var SESSION_INVALIDATED_ERROR = 'Session invalidated in accessControl callback';
 
 var setupQueries = function(store) {
 
@@ -135,3 +135,5 @@ module.exports = function(store, customAccessControl) {
         setupAccessControl(store);
     }
 };
+module.exports.SESSION_INVALIDATED_ERROR = SESSION_INVALIDATED_ERROR;
+module.exports.sessionInvalidated = sessionInvalidated;
