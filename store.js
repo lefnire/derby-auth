@@ -14,7 +14,7 @@ var setupQueries = function(store) {
     });
     store.queryAccess('users', 'withId', function(id, accept, err) {
         var sess = this.session;
-        if (!sess && !sess.userId) return accept(true); // https://github.com/codeparty/racer/issues/37
+        if (!sess || !sess.userId) return accept(true); // https://github.com/codeparty/racer/issues/37
         return accept(id === sess.userId);
     });
 
@@ -94,10 +94,10 @@ var setupAccessControl = function(store) {
     store.readPathAccess('users.*', function() { // captures, next) ->
         var accept = arguments[arguments.length - 2],
             sess = this.session;
-        if (!sess && !sess.userId) return accept(true); // https://github.com/codeparty/racer/issues/37
+        if (!sess || !sess.userId) return accept(true); // https://github.com/codeparty/racer/issues/37
 
         var captures = arguments[0],
-            sameSession = captures === this.session.userId,
+            sameSession = captures === sess.userId,
             isServer = false;//!this.req.socket; //TODO how to determine if request came from server, as in REST?
         return accept(sameSession || isServer);
     });
@@ -105,7 +105,7 @@ var setupAccessControl = function(store) {
     store.writeAccess('*', 'users.*', function() { // captures, value, next) ->
         var accept = arguments[arguments.length - 2],
             sess = this.session;
-        if (!sess && !sess.userId) return accept(true); // https://github.com/codeparty/racer/issues/37
+        if (!sess || !sess.userId) return accept(true); // https://github.com/codeparty/racer/issues/37
 
         var captures = arguments[0],
             sameSession = captures.split('.')[0] === sess.userId,
