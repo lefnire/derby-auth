@@ -1,4 +1,6 @@
-
+/**
+ * FIXME https://github.com/codeparty/racer/issues/37
+ */
 
 var setupQueries = function(store) {
 
@@ -14,8 +16,7 @@ var setupQueries = function(store) {
     });
     store.queryAccess('users', 'withId', function(id, accept, err) {
         var sess = this.session;
-        if (!sess || !sess.userId) return accept(true); // https://github.com/codeparty/racer/issues/37
-        return accept(id === sess.userId);
+        return accept(!!sess && !!sess.userId && id === sess.userId);
     });
 
     // Functions for finding if user exists with given criteria
@@ -94,10 +95,9 @@ var setupAccessControl = function(store) {
     store.readPathAccess('users.*', function() { // captures, next) ->
         var accept = arguments[arguments.length - 2],
             sess = this.session;
-        if (!sess || !sess.userId) return accept(true); // https://github.com/codeparty/racer/issues/37
 
         var captures = arguments[0],
-            sameSession = captures === sess.userId,
+            sameSession = (!!sess && !!sess.userId && captures === sess.userId),
             isServer = false;//!this.req.socket; //TODO how to determine if request came from server, as in REST?
         return accept(sameSession || isServer);
     });
@@ -105,10 +105,9 @@ var setupAccessControl = function(store) {
     store.writeAccess('*', 'users.*', function() { // captures, value, next) ->
         var accept = arguments[arguments.length - 2],
             sess = this.session;
-        if (!sess || !sess.userId) return accept(true); // https://github.com/codeparty/racer/issues/37
 
         var captures = arguments[0],
-            sameSession = captures.split('.')[0] === sess.userId,
+            sameSession = (!!sess && !!sess.userId && captures.split('.')[0] === sess.userId),
             isServer = false;//!this.req.socket;
         return accept(sameSession || isServer);
     });
