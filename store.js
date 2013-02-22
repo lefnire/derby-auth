@@ -19,7 +19,8 @@ var setupQueries = function(store) {
             .limit(1);
     });
     store.queryAccess('users', 'withId', function(id, accept, err) {
-        if (sessionInvalidated(this)) return err(SESSION_INVALIDATED_ERROR);
+//        if (sessionInvalidated(this)) return err(SESSION_INVALIDATED_ERROR);
+        if (sessionInvalidated(this)) return accept(true);
         accept(id === this.session.userId);
     });
 
@@ -100,7 +101,8 @@ var setupAccessControl = function(store) {
         var accept = arguments[arguments.length - 2],
             err = arguments[arguments.length -1];
 
-        if (sessionInvalidated(this)) return err(SESSION_INVALIDATED_ERROR);
+//        if (sessionInvalidated(this)) return err(SESSION_INVALIDATED_ERROR);
+        if (sessionInvalidated(this)) return accept(true);
 
         var captures = arguments[0],
             sameSession = (captures === this.session.userId),
@@ -112,7 +114,8 @@ var setupAccessControl = function(store) {
         var accept = arguments[arguments.length - 2],
             err = arguments[arguments.length -1];
 
-        if (sessionInvalidated(this)) return err(SESSION_INVALIDATED_ERROR);
+//        if (sessionInvalidated(this)) return err(SESSION_INVALIDATED_ERROR);
+        if (sessionInvalidated(this)) return accept(true);
 
         var captures = arguments[0],
             sameSession = (captures.split('.')[0] === this.session.userId),
