@@ -50,6 +50,12 @@ Also, *make sure* your express app is using sessions:
 )
 ```
 
+And finaly, we need to add form data parsing support:
+```javascript
+// Uncomment to add form data parsing support
+.use(express.bodyParser())
+```
+
 ###Step 4 (optional, recommended)
 If you want drop-in Login and Register forms, including form validation, use the `<derby-auth:login />` and `<derby-auth:register />` [components](http://derbyjs.com/#component_libraries). To enable these, you'll need this in your `/lib/app/index.js` file:
 ```javascript
