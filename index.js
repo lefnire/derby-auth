@@ -297,40 +297,31 @@ function setupStaticRoutes(expressApp, strategies, options) {
         res.redirect('/');
     });
 
-    expressApp.post('/password-reset', function(req, res){
+    expressApp.post('/password-reset', function(req, res, next){
         var model = req.getModel(),
             email = req.body.email,
             salt = utils.makeSalt(),
             newPassword =  utils.makeSalt(), // use a salt as the new password too (they'll change it later)
             hashed_password = utils.encryptPassword(newPassword, salt);
 
-        model.fetch(model.query('users').withEmail(email), function(err, users){
-            if (!err && !(users.get()[0])) err = "Somethign went wrong resetting password for " + email + ". Couldn't find user for some reason.";
-            if (err) {
-                console.log(err);
-                return res.send(500, e);
-            }
+        model.query('users').withEmail(email).fetch(function(err, result){
+            if (err) return next(err);
+            var user = result.at(0),
+                userObj = user.get();
+            if (!userObj) return res.send(500, "Couldn't find a user registered for email " + email);
 
-            // we use mongoskin to bypass racer's accessConrol settings where we're authorized.
-            // TODO come up with a different accessControl approach, this shouldn't be necessary
-            var mongo = require('mongoskin');
-            mongo.db(model.store._db.options.uri).collection('users').update(
-                {"auth.local.email": email},
-                {$set: {'auth.local.salt': salt, 'auth.local.hashed_password': hashed_password} },
-                function (err, items) {
-                    console.dir({err:err, items:items});
-                    if (err) return res.send(500, err);
-                    sendEmail({
-                        from: "HabitRPG <admin@habitrpg.com>",
-                        to: email,
-                        subject: "Password Reset for HabitRPG",
-                        text: "Your new password is " + newPassword + ". You an login at https://habitrpg.com"
-                    });
-                    return res.send('New password sent to '+ email);
-            })
-
-        })
-
+            req._isServer = true; // our bypassing of session-based accessControl
+            user.set('auth.local.salt', salt);
+            user.set('auth.local.hashed_password', hashed_password);
+            sendEmail({
+                from: "HabitRPG <admin@habitrpg.com>",
+                to: email,
+                subject: "Password Reset for HabitRPG",
+                text: "Password for " + userObj.auth.local.username + " has been reset to " + newPassword + ". Log in at https://habitrpg.com",
+                html: "Password for <strong>" + userObj.auth.local.username + "</strong> has been reset to <strong>" + newPassword + "</strong>. Log in at https://habitrpg.com"
+            });
+            return res.send('New password sent to '+ email);
+        });
     })
 
     // Simple route middleware to ensure user is authenticated.

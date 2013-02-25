@@ -50,7 +50,7 @@ var setupQueries = function(store) {
         return this
             .where('auth.local.email')
             .equals(email)
-            .only('auth.local.email').limit(1);
+            .only(['auth.local.email', 'auth.local.username']).limit(1);
     });
     store.queryAccess('users', 'withEmail', function(email, accept, err) {
         return accept(true); // for now
