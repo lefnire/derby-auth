@@ -66,7 +66,7 @@ exports.usernameBlur = function(){
     rootModel.fetch(q, function(err, users) {
         try {
             if (err) throw new Error(err);
-            var userObj = users.at(0).get()
+            var userObj = users.get()
             if (userObj) throw new Error('Username already taken');
         } catch (err) {
             model.set('errors.username', err.message);
@@ -82,7 +82,7 @@ exports.emailBlur = function(){
     rootModel.fetch(q, function(err, users) {
         try {
             if (err) throw new Error(err);
-            var userObj = users.at(0).get()
+            var userObj = users.get()
             if (userObj) throw new Error('Email already taken');
         } catch (err) {
             model.set('errors.email', err.message);

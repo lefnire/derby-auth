@@ -114,7 +114,7 @@ function setupPassport(strategies, options) {
             var q = model.query('users').withUsername(username);
             q.fetch(function(err, result1){
                 if (err) return done(err); // real error
-                var u1 = result1.at(0).get()
+                var u1 = result1.get()
                 if (!u1) return done(null, false, {message:'User not found with that username.'});// user not found
 
                 // We needed the whole user object first so we can get his salt to encrypt password comparison
@@ -122,7 +122,7 @@ function setupPassport(strategies, options) {
                 q.fetch(function(err, result2){
                     if (err) return done(err); // real error
                     if(process.env.NODE_ENV==='development') console.log(u2);
-                    var u2 = result2.at(0).get()
+                    var u2 = result2.get()
                     if (!u2) return done(null, false, {message:'Password incorrect.'});// user not found
                     _loginUser(model, u2, done);
                 });
@@ -155,9 +155,9 @@ function setupPassport(strategies, options) {
                 model.fetch(providerQ, currentUserQ, function(err, providerUser, currentUser) {
                     if (err) return done(err);
 
-                    var userObj = providerUser.at(0).get()
+                    var userObj = providerUser.get()
                     if (!userObj) {
-                        var currentUserScope = currentUser.at(0);
+                        var currentUserScope = currentUser;
                         currentUserScope.set('auth.' + profile.provider, profile);
                         currentUserScope.set('auth.timestamps.created', +new Date);
                         userObj = currentUserScope.get();
@@ -239,7 +239,7 @@ function setupStaticRoutes(expressApp, strategies, options) {
         q.fetch(function(err, result){
             if (err) return next(err)
 
-            var userObj = result.at(0).get();
+            var userObj = result.get();
 
             // current user already registered, return
             if (model.get('users.' + sess.userId + '.auth.local')) return res.redirect('/');
@@ -307,7 +307,7 @@ function setupStaticRoutes(expressApp, strategies, options) {
 
         model.query('users').withEmail(email).fetch(function(err, result){
             if (err) return next(err);
-            var user = result.at(0),
+            var user = result,
                 userObj = user.get();
             if (!userObj) return res.send(500, "Couldn't find a user registered for email " + email);
 

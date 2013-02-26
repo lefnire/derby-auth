@@ -19,7 +19,7 @@ var setupQueries = function(store) {
             .where('id')
             .equals(id)
             //.except('auth.local.hashed_password')
-            .limit(1);
+            .findOne();
     });
     store.queryAccess('users', 'withId', function(id, accept, err) {
 //        if (bustedSession(this)) return err(SESSION_INVALIDATED_ERROR);
@@ -37,7 +37,8 @@ var setupQueries = function(store) {
         return this
             .where('auth.local.username')
             .equals(username)
-            .except('auth.local.hashed_password').limit(1);
+            .except('auth.local.hashed_password')
+            .findOne();
     });
     store.queryAccess('users', 'withUsername', function(username, accept, err) {
         return accept(true); // for now
@@ -50,7 +51,8 @@ var setupQueries = function(store) {
         return this
             .where('auth.local.email')
             .equals(email)
-            .only(['auth.local.email', 'auth.local.username']).limit(1);
+            .only(['auth.local.email', 'auth.local.username'])
+            .findOne();
     });
     store.queryAccess('users', 'withEmail', function(email, accept, err) {
         return accept(true); // for now
@@ -64,7 +66,8 @@ var setupQueries = function(store) {
             .where('auth.local.username')
             .equals(username)
             .where('auth.local.hashed_password')
-            .equals(hashed_password);
+            .equals(hashed_password)
+            .findOne();
 
         // With this enabled, the query finds 0 results. I'm assuming where('..password') and only('..username') conflict.
         // It's ok, they'd have to know both uname & pw to hack this query anyway.
@@ -81,7 +84,8 @@ var setupQueries = function(store) {
         return this
             .where("auth." + provider + ".id")
             .equals(id)
-            .only("auth." + provider + ".id").limit(1);
+            .only("auth." + provider + ".id")
+            .findOne();
     });
     store.queryAccess('users', 'withProvider', function(provider, id, accept, err) {
         return accept(true); // for now
