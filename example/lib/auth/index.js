@@ -7,8 +7,8 @@ derby.use(require('../../ui'));
 derby.use(require('../../../components'));
 
 get('/', function(page, model) {
-  model.subscribe('users.' + model.get('_userId'), function(err, user) {
-    model.ref('_user', user);
+  model.query('users').withId(model.get('_userId')).subscribe(function(err, users) {
+    model.ref('_user', users.at(0));
     page.render();
   });
 });
