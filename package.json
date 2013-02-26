@@ -33,7 +33,6 @@
         "connect-flash": "*",
         "lodash": "*",
         "guid": "*",
-        "mongoskin": "*",
         "nodemailer": "*",
         "validator": "*",
         "express": "*"
