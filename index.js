@@ -5,6 +5,7 @@ var passport = require('passport')
     , expressApp = require('express')()
     , setupStore = require('./store')
     , utils = require('./utils')
+    , nodemailer = require("nodemailer")
   ;
 
 module.exports.store = function(store, customAccessControl) {
@@ -349,8 +350,6 @@ function _loginUser(model, userObj, done) {
 }
 
 function sendEmail(mailData) {
-    var nodemailer = require("nodemailer");
-
     // create reusable transport method (opens pool of SMTP connections)
     // TODO derby-auth isn't currently configurable here, if you need customizations please send pull request
     var smtpTransport = nodemailer.createTransport("SMTP",{
