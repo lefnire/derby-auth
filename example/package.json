@@ -14,7 +14,8 @@
     "passport-facebook": "*",
     "passport-twitter": "*",
     "passport-linkedin": "*",
-    "passport-github": "*"
+    "passport-github": "*",
+    "webkit-devtools-agent": "*"
   },
   "private": true,
   "devDependencies": {
