@@ -62,6 +62,8 @@
         <p>
             {#if _user.auth.local}
                 <p><span class="label">registration</span><pre class="prettyprint">_user.auth.local.username = {_user.auth.local.username}</pre></p>
+                <hr/>
+                <derby-auth:changePassword />
             {else}
                 <boot:tabs>
                     <boot:tab title="Login">
