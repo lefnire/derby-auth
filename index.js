@@ -329,7 +329,6 @@ function setupStaticRoutes(expressApp, strategies, options) {
 
         var model = req.getModel(),
             uid = req.body.uid;
-        console.log(uid);
 
         model.query('users').withId(uid).fetch(function(err, user){
             var errMsg = "Couldn't find that user (this shouldn't be happening, contact Tyler: http://goo.gl/nrx99)",
