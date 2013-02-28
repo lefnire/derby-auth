@@ -305,10 +305,9 @@ function setupStaticRoutes(expressApp, strategies, options) {
             newPassword =  utils.makeSalt(), // use a salt as the new password too (they'll change it later)
             hashed_password = utils.encryptPassword(newPassword, salt);
 
-        model.query('users').withEmail(email).fetch(function(err, result){
+        model.query('users').withEmail(email).fetch(function(err, user){
             if (err) return next(err);
-            var user = result,
-                userObj = user.get();
+            var userObj = user.get();
             if (!userObj) return res.send(500, "Couldn't find a user registered for email " + email);
 
             req._isServer = true; // our bypassing of session-based accessControl
@@ -322,6 +321,29 @@ function setupStaticRoutes(expressApp, strategies, options) {
                 html: "Password for <strong>" + userObj.auth.local.username + "</strong> has been reset to <strong>" + newPassword + "</strong>. Log in at https://habitrpg.com"
             });
             return res.send('New password sent to '+ email);
+        });
+    })
+
+    expressApp.post('/password-change', function(req, res, next){
+        req._isServer = true; // our bypassing of session-based accessControl
+
+        var model = req.getModel(),
+            uid = req.body.uid;
+        console.log(uid);
+
+        model.query('users').withId(uid).fetch(function(err, user){
+            var errMsg = "Couldn't find that user (this shouldn't be happening, contact Tyler: http://goo.gl/nrx99)",
+                userObj;
+            if (err || !(userObj = user.get() )) return res.send(500, errMsg);
+
+            var salt = userObj.auth.local.salt,
+                hashed_old_password = utils.encryptPassword(req.body.oldPassword, salt),
+                hashed_new_password = utils.encryptPassword(req.body.newPassword, salt);
+
+            if (hashed_old_password !== userObj.auth.local.hashed_password) return res.send(500, "Old password doesn't match");
+
+            user.set('auth.local.hashed_password', hashed_new_password);
+            return res.send(200);
         });
     })
 

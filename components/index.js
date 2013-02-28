@@ -5,6 +5,7 @@ function components(derby, options) {
         , scripts: {
             register: require('./register')
             , login: require('./login')
+            , changePassword: require('./changePassword')
         }
     }
     derby.createLibrary(config, options);

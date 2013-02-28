@@ -1,0 +1,30 @@
+<changePassword:>
+    {{#if _user.auth.local}}
+        {#with :self}
+            <form id="derby-auth-change-password" x-bind="submit:submitPasswordChange">
+
+                <input type="hidden" name="uid" value="{{_userId}}" />
+
+                <div class="control-group {#if .errors.oldPassword}error{/}">
+                    <input type='password' name="old-password" placeholder="Old Password" value="{.oldPassword}"/>
+                    <span class="help-inline">{.errors.oldPassword}</span>
+                </div>
+
+                <div class="control-group {#if .errors.password}error{/}">
+                    <input type='password' name="password" placeholder="New Password" value="{.password}"/>
+                    <span class="help-inline">{.errors.password}</span>
+                </div>
+
+                <div class="control-group {#if .errors.passwordConfirmation}error{/}">
+                    <input type='password' name="password-confirmation" placeholder="Confirm New Password" value="{.passwordConfirmation}"/>
+                    <span class="help-inline">{.errors.passwordConfirmation}</span>
+                </div>
+
+                {#if .canSubmit}
+                    <input type="submit" value="Submit" class="btn"/>
+                {else}
+                    <input type="submit" value="Submit" class="btn disabled" disabled/>
+                {/}
+            </form>
+        {/}
+    {{/}}
