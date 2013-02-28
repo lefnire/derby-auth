@@ -332,7 +332,7 @@ function setupStaticRoutes(expressApp, strategies, options) {
         model.query('users').withId(uid).fetch(function(err, user){
             var errMsg = "Couldn't find that user (this shouldn't be happening, contact Tyler: http://goo.gl/nrx99)",
                 userObj;
-            if (err || !(userObj = user.get() )) return res.send(500, errMsg);
+            if (err || !(userObj = user.get() )) return res.send(500, err || errMsg);
 
             var salt = userObj.auth.local.salt,
                 hashed_old_password = utils.encryptPassword(req.body.oldPassword, salt),
