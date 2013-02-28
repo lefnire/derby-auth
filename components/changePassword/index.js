@@ -53,11 +53,9 @@ exports.submitPasswordChange = function(e, el) {
             newPassword: model.get('password')
         },
         success: function(data, textStatus, jqXHR ){
-            debugger
             alert("Password successfully changed");
         },
         error: function(jqXHR, textStatus, errorThrown ){
-            debugger
             model.set('errors.oldPassword', jqXHR.responseText);
         }
     })
