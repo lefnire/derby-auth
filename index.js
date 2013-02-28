@@ -325,7 +325,6 @@ function setupStaticRoutes(expressApp, strategies, options) {
     })
 
     expressApp.post('/password-change', function(req, res, next){
-        req._isServer = true; // our bypassing of session-based accessControl
 
         var model = req.getModel(),
             uid = req.body.uid;
