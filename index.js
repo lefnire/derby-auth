@@ -364,9 +364,12 @@ function setupStaticRoutes(expressApp, strategies, options) {
 
 function _loginUser(model, userObj, done) {
     model.session.userId = userObj.id;
-    model.set('users.' + userObj.id + '.auth.timestamps.loggedin', new Date());
     // done() sets req.user, which is later referenced to determine _loggedIn
-    if (done) done(null, userObj.id);
+    model.set('users.' + userObj.id + '.auth.timestamps.loggedin', new Date(), function () {
+      if (done) {
+        done(null, userObj.id);
+      }
+    });
 }
 
 function sendEmail(mailData) {
