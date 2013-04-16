@@ -257,7 +257,7 @@ function setupStaticRoutes(expressApp, strategies, options) {
                         hashed_password: utils.encryptPassword(req.body.password, salt)
                     };
                 model.set('users.' + sess.userId + '.auth.local', localAuth);
-                model.set('users.' + sess.userId + '.auth.timestamps.created', new Date());
+                model.set('users.' + sess.userId + '.auth.timestamps.created', +new Date);
                 req.login(sess.userId, function(err) {
                     if (err) { return next(err); }
                     return res.redirect('/');
@@ -365,7 +365,7 @@ function setupStaticRoutes(expressApp, strategies, options) {
 function _loginUser(model, userObj, done) {
     model.session.userId = userObj.id;
     // done() sets req.user, which is later referenced to determine _loggedIn
-    model.set('users.' + userObj.id + '.auth.timestamps.loggedin', new Date(), function () {
+    model.set('users.' + userObj.id + '.auth.timestamps.loggedin', +new Date, function () {
       if (done) {
         done(null, userObj.id);
       }
