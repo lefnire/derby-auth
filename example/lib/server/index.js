@@ -81,7 +81,7 @@ var mongoStore = new MongoStore({ url: dbUri }, function(){
 
     expressApp
         .use(express.favicon())
-        //.use(gzippo.staticGzip(publicPath, {maxAge: ONE_YEAR}))
+        .use(gzippo.staticGzip(publicPath, {maxAge: ONE_YEAR}))
         .use(express.compress()).use(express.bodyParser())
         .use(express.methodOverride())
         .use(express.cookieParser())
