@@ -13,7 +13,7 @@ var expressApp = express(),
 
 derby.use(require('racer-db-mongo'));
 var store = derby.createStore({
-  db: { type: 'Mongo', uri: dbUri },
+  db: { type: 'Mongo', uri: dbUri, safe: true },
   listen: server
 });
 
@@ -77,31 +77,35 @@ var
 
 auth.store(store);
 
-expressApp
-    .use(express.favicon())
-    .use(gzippo.staticGzip(publicPath, {maxAge: ONE_YEAR}))
-    .use(express.compress()).use(express.bodyParser())
-    .use(express.methodOverride())
-    .use(express.cookieParser())
-    .use(store.sessionMiddleware({
-        secret: process.env.SESSION_SECRET || 'YOUR SECRET HERE',
-        cookie: {maxAge: ONE_YEAR},
-        store: new MongoStore({ url: dbUri })
-    }))
-    .use(store.modelMiddleware())
+var mongoStore = new MongoStore({ url: dbUri }, function(){
 
-    /**
-     * (2)
-     * derbyAuth.middleware is inserted after modelMiddleware and before the app router to pass server accessible data to a model
-     * Pass in {store} (sets up accessControl & queries), {strategies} (see above), and options
-     */
-    .use(auth.middleware(strategies, options))
+    expressApp
+        .use(express.favicon())
+        //.use(gzippo.staticGzip(publicPath, {maxAge: ONE_YEAR}))
+        .use(express.compress()).use(express.bodyParser())
+        .use(express.methodOverride())
+        .use(express.cookieParser())
+        .use(store.sessionMiddleware({
+            secret: process.env.SESSION_SECRET || 'YOUR SECRET HERE',
+            cookie: {maxAge: ONE_YEAR},
+            store: mongoStore
+        }))
+        .use(store.modelMiddleware())
 
-    .use(app.router())
-    .use(expressApp.router)
-    .use(serverError(root)
-);
+        /**
+         * (2)
+         * derbyAuth.middleware is inserted after modelMiddleware and before the app router to pass server accessible data to a model
+         * Pass in {store} (sets up accessControl & queries), {strategies} (see above), and options
+         */
+        .use(auth.middleware(strategies, options))
 
-expressApp.all('*', function(req) {
-  throw "404: " + req.url;
-});
+        .use(app.router())
+        .use(expressApp.router)
+        .use(serverError(root)
+    );
+
+    expressApp.all('*', function(req) {
+      throw "404: " + req.url;
+    });
+})
+
