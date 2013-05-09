@@ -4,8 +4,8 @@
   "version": "0.0.0",
   "main": "./server.js",
   "dependencies": {
-    "derby": "git://github.com/codeparty/derby#master",
-    "racer": "git://github.com/codeparty/racer#master",
+    "derby": "git://github.com/Unroll-Me/derby#master",
+    "racer": "git://github.com/SLaks/racer#master",
     "racer-db-mongo": "git://github.com/codeparty/racer-db-mongo#master",
     "derby-ui-boot": "git://github.com/codeparty/derby-ui-boot#master",
     "express": "*",
