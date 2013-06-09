@@ -1,9 +1,9 @@
 <changePassword:>
-    {{#if _user.auth.local}}
+    {{#if _page.user.auth.local}}
         {#with :self}
             <form id="derby-auth-change-password" x-bind="submit:submitPasswordChange">
 
-                <input type="hidden" name="uid" value="{{_userId}}" />
+                <input type="hidden" name="uid" value="{{_session.userId}}" />
 
                 <div class="control-group {#if .errors.oldPassword}error{/}">
                     <input type='password' name="old-password" placeholder="Old Password" value="{.oldPassword}"/>

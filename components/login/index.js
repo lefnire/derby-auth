@@ -12,11 +12,11 @@ exports.usernameBlur = function(){
     // check username registered
     var model = this.model,
         rootModel = model.parent().parent(),
-        q = rootModel.query('users').withUsername(model.get('username'));
-    rootModel.fetch(q, function(err, users) {
+        q = rootModel.query('users', {'auth.local.username':model.get('username'), $limit: 1});
+    rootModel.fetch(q, function(err) {
         try {
             if (err) throw new Error(err);
-            var userObj = users.get()
+            var userObj = q.get()[0]
             if (!userObj) {
                 throw new Error("Username not registered. Make sure you're using the same capitalization you used to register!");
             } else {
@@ -40,11 +40,11 @@ exports.submitPasswordReset = function() {
     // check username registered
     var model = this.model,
         rootModel = model.parent().parent(),
-        q = rootModel.query('users').withEmail(model.get('passwordResetEmail'));
-    rootModel.fetch(q, function(err, users) {
+        q = rootModel.query('users', {'auth.local.email': model.get('passwordResetEmail'), $limit: 1});
+    rootModel.fetch(q, function(err) {
         try {
             if (err) throw new Error(err);
-            var userObj = users.get()
+            var userObj = q.get()[0]
             if (!userObj) {
                 throw new Error('Email not registered.');
             } else {

@@ -3,14 +3,15 @@ var passport = require('passport')
     , flash = require('connect-flash') // used for setting error messages
     , _  = require('lodash')
     , expressApp = require('express')()
-    , setupStore = require('./store')
+    //, setupStore = require('./store')
     , utils = require('./utils')
     , nodemailer = require("nodemailer")
   ;
 
-module.exports.store = function(store, customAccessControl) {
-    setupStore(store, customAccessControl);
-}
+//TODO implement access control
+//module.exports.store = function(store, customAccessControl) {
+//    setupStore(store, customAccessControl);
+//}
 
 /**
  * Provides "mounted" (sub-app) middleware which provides authentication for DerbyJS
@@ -53,19 +54,19 @@ function setupMiddleware(strategies, options) {
         if (req.is('json')) return next() // don't create new users / authenticate on REST calls
 
         var model = req.getModel()
-            , sess = model.session;
+            , sess = req.session;
 
-        model.set('_loggedIn', sess.passport && sess.passport.user);
+        model.set('_session.loggedIn', sess.passport && sess.passport.user);
+        model.set('_session.userId', sess.userId);
 
         // set any error / success messages
-        model.set('_flash', req.flash());
+        model.set('_session.flash', req.flash());
 
         // New User - They get to play around before creating a new account.
         if (!sess.userId) {
-            sess.userId = model.id();
             var schema = _.cloneDeep(options.schema);
             _.defaults(schema, {auth:{}}); // make sure user schema is defaulted with at least {auth:{}}
-            model.set("users." + sess.userId, schema);
+            sess.userId = model.add("users", schema);
         }
 
         return next();
@@ -110,20 +111,20 @@ function setupPassport(strategies, options) {
             // username, or the password is not correct, set the user to `false` to
             // indicate failure and set a flash message.  Otherwise, return the
             // authenticated `user`.
-            var q = model.query('users').withUsername(username);
-            q.fetch(function(err, result1){
+            var withUname = model.query('users', {'auth.local.username':username, $limit:1})
+            withUname.fetch(function(err){
                 if (err) return done(err); // real error
-                var u1 = result1.get()
-                if (!u1) return done(null, false, {message:'User not found with that username.'});// user not found
+                var uObj = withUname.get()[0]
+                if (!uObj) return done(null, false, {message:'User not found with that username.'});// user not found
 
                 // We needed the whole user object first so we can get his salt to encrypt password comparison
-                q = model.query('users').withLogin(username, utils.encryptPassword(password, u1.auth.local.salt));
-                q.fetch(function(err, result2){
+                var hashed = utils.encryptPassword(password, uObj.auth.local.salt),
+                    $login = model.query('users', {'auth.local.username': username, 'auth.local.hashed_password': hashed, $limit: 1});
+                $login.fetch(function(err){
                     if (err) return done(err); // real error
-                    if(process.env.NODE_ENV==='development') console.log(u2);
-                    var u2 = result2.get()
-                    if (!u2) return done(null, false, {message:'Password incorrect.'});// user not found
-                    _loginUser(model, u2, done);
+                    uObj = $login.get()[0]
+                    if (!uObj) return done(null, false, {message:'Password incorrect.'});// user not found
+                    _loginUser(model, req, uObj.id, done);
                 });
             });
         }
@@ -143,28 +144,28 @@ function setupPassport(strategies, options) {
         //   credentials (in this case, an accessToken, refreshToken, and Facebook
         //   profile), and invoke a callback with a user object.
         passport.use(new obj.strategy(obj.conf, function(req, accessToken, refreshToken, profile, done) {
-                var model = req.getModel()
+                var model = req.getModel();
 
                 // If facebook user exists, log that person in. If not, associate facebook user
                 // with currently "staged" user account - then log them in
 
-                var providerQ = model.query('users').withProvider(profile.provider, profile.id),
-                    currentUserQ = model.query('users').withId(model.get('_userId') || model.session.userId);
+                var $currUser = model.at('users.' + req.session.userId);
+                    $provider = {$limit: 1};
+                $provider['auth.' + profile.provider + '.id'] = profile.id;
+                $provider = model.query('users', $provider);
 
-                model.fetch(providerQ, currentUserQ, function(err, providerUser, currentUser) {
+                model.fetch($provider, $currUser, function(err) {
                     if (err) return done(err);
-
-                    var userObj = providerUser.get()
+                    var userObj = $provider.get()[0]
                     if (!userObj) {
-                        var currentUserScope = currentUser;
-                        currentUserScope.set('auth.' + profile.provider, profile);
-                        currentUserScope.set('auth.timestamps.created', +new Date);
-                        userObj = currentUserScope.get();
+                        $currUser.set('auth.' + profile.provider, profile);
+                        $currUser.set('auth.timestamps.created', +new Date);
+                        userObj = $currUser.get();
                         if (!userObj && !userObj.id) return done("Something went wrong trying to tie #{profile.provider} account to staged user")
                     }
 
                     // User was found, log in
-                    _loginUser(model, userObj, done);
+                    _loginUser(model, req, userObj.id, done);
                 });
             }
         ));
@@ -215,17 +216,16 @@ function setupStaticRoutes(expressApp, strategies, options) {
 
     expressApp.post('/register', function(req, res, next){
         var model = req.getModel()
-            , sess = model.session;
+            , sess = req.session;
 
-        var q = model.query('users').withUsername(req.body.username);
-        q.fetch(function(err, result){
+        var $uname = model.query('users', {username: req.body.username, $limit: 1}),
+            $currUser = model.at('users.' + sess.userId);
+        model.fetch($uname, $currUser, function(err){
             if (err) return next(err)
-
-            var userObj = result.get();
-
             // current user already registered, return
-            if (model.get('users.' + sess.userId + '.auth.local')) return res.redirect('/');
+            if ($currUser.get('auth.local')) return res.redirect('/');
 
+            var userObj = $uname.get()[0];
             if (userObj) {
                 // a user already registered with that name, TODO send error message
                 return res.redirect(options.failureRedirect);
@@ -238,8 +238,8 @@ function setupStaticRoutes(expressApp, strategies, options) {
                         salt: salt,
                         hashed_password: utils.encryptPassword(req.body.password, salt)
                     };
-                model.set('users.' + sess.userId + '.auth.local', localAuth);
-                model.set('users.' + sess.userId + '.auth.timestamps.created', +new Date);
+                $currUser.set('auth.local', localAuth);
+                $currUser.set('auth.timestamps.created', +new Date);
                 req.login(sess.userId, function(err) {
                     if (err) { return next(err); }
                     return res.redirect('/');
@@ -249,7 +249,7 @@ function setupStaticRoutes(expressApp, strategies, options) {
     });
 
     _.each(strategies, function(strategy, name){
-        params = strategy.params || {}
+        var params = strategy.params || {}
         // GET /auth/facebook
         //   Use passport.authenticate() as route middleware to authenticate the
         //   request.  The first step in Facebook authentication will involve
@@ -287,14 +287,15 @@ function setupStaticRoutes(expressApp, strategies, options) {
             newPassword =  utils.makeSalt(), // use a salt as the new password too (they'll change it later)
             hashed_password = utils.encryptPassword(newPassword, salt);
 
-        model.query('users').withEmail(email).fetch(function(err, user){
+        var $email = model.query('users', {'auth.local.email':email, $limit:1});
+        $email.fetch(function(err){
             if (err) return next(err);
-            var userObj = user.get();
+            var userObj = $email.get()[0];
             if (!userObj) return res.send(500, "Couldn't find a user registered for email " + email);
 
             req._isServer = true; // our bypassing of session-based accessControl
-            user.set('auth.local.salt', salt);
-            user.set('auth.local.hashed_password', hashed_password);
+            $email.set('auth.local.salt', salt);
+            $email.set('auth.local.hashed_password', hashed_password);
             sendEmail({
                 from: "HabitRPG <admin@habitrpg.com>",
                 to: email,
@@ -309,12 +310,13 @@ function setupStaticRoutes(expressApp, strategies, options) {
     expressApp.post('/password-change', function(req, res, next){
 
         var model = req.getModel(),
-            uid = req.body.uid;
+            uid = req.body.uid,
+            $user = model.at('users.' + uid)
 
-        model.query('users').withId(uid).fetch(function(err, user){
+        $user.fetch(function(err){
             var errMsg = "Couldn't find that user (this shouldn't be happening, contact Tyler: http://goo.gl/nrx99)",
                 userObj;
-            if (err || !(userObj = user.get() )) return res.send(500, err || errMsg);
+            if (err || !(userObj = $user.get() )) return res.send(500, err || errMsg);
 
             var salt = userObj.auth.local.salt,
                 hashed_old_password = utils.encryptPassword(req.body.oldPassword, salt),
@@ -322,7 +324,7 @@ function setupStaticRoutes(expressApp, strategies, options) {
 
             if (hashed_old_password !== userObj.auth.local.hashed_password) return res.send(500, "Old password doesn't match");
 
-            user.set('auth.local.hashed_password', hashed_new_password);
+            $user.set('auth.local.hashed_password', hashed_new_password);
             return res.send(200);
         });
     })
@@ -344,13 +346,11 @@ function setupStaticRoutes(expressApp, strategies, options) {
  */
 
 
-function _loginUser(model, userObj, done) {
-    model.session.userId = userObj.id;
-    // done() sets req.user, which is later referenced to determine _loggedIn
-    model.set('users.' + userObj.id + '.auth.timestamps.loggedin', +new Date, function () {
-      if (done) {
-        done(null, userObj.id);
-      }
+function _loginUser(model, req, uid, done) {
+    req.session.userId = uid;
+    // done() sets req.user, which is later referenced to determine _session.loggedIn
+    model.set('users.' + uid + '.auth.timestamps.loggedin', +new Date, function () {
+      done(null, uid);
     });
 }
 

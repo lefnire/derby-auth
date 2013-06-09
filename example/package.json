@@ -4,20 +4,19 @@
   "version": "0.0.0",
   "main": "./server.js",
   "dependencies": {
-    "derby": "git://github.com/Unroll-Me/derby#master",
-    "racer": "git://github.com/SLaks/racer#master",
-    "racer-db-mongo": "git://github.com/codeparty/racer-db-mongo#master",
-    "derby-ui-boot": "git://github.com/codeparty/derby-ui-boot#f04ba2c7e7b3a8f1462a6e70fe4f81055d74c4b2",
+    "derby": "git://github.com/codeparty/derby#master",
+    "racer": "git://github.com/codeparty/racer#master",
+    "derby-ui-boot": "git://github.com/codeparty/derby-ui-boot#master",
+    "racer-browserchannel": "git://github.com/codeparty/racer-browserchannel#master",
+    "livedb-mongo": "*",
     "express": "*",
-    "gzippo": "*",
     "connect-mongo": "*",
+    "redis": "*",
     "passport-facebook": "*",
     "passport-twitter": "*",
     "passport-linkedin": "*",
-    "passport-github": "*"
+    "passport-github": "*",
+    "coffeeify": "*"
   },
-  "private": true,
-  "devDependencies": {
-    "coffee-script": ">=1.3.1"
-  }
+  "private": true
 }

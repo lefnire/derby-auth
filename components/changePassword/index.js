@@ -10,7 +10,7 @@ exports.create = function(model, dom) {
     // sorry but we need jquery, especially for ajax
     if (!window.$) require('../../vendor/jquery-1.8.3.min.js');
 
-    model.on('set', 'password', function(password){
+    model.on('change', 'password', function(password){
         if (!password) return
         try {
             check(password).len(6);
@@ -20,7 +20,7 @@ exports.create = function(model, dom) {
         }
     });
 
-    model.on('set', 'passwordConfirmation', function(passwordConfirmation){
+    model.on('change', 'passwordConfirmation', function(passwordConfirmation){
         if (!passwordConfirmation) return
         try {
             check(passwordConfirmation).equals(model.get('password'));
@@ -30,7 +30,7 @@ exports.create = function(model, dom) {
         }
     });
 
-    model.on('set', 'errors.*', function(error){
+    model.on('change', 'errors.*', function(error){
         var m = model.get(),
             canSubmit = false;
         if (!m.errors.passwordConfirmation && !m.errors.password &&
@@ -48,7 +48,7 @@ exports.submitPasswordChange = function(e, el) {
         url: '/password-change',
         type:'POST',
         data: {
-            uid: rootModel.get('_userId'),
+            uid: rootModel.get('_session.userId'),
             oldPassword: model.get('oldPassword'),
             newPassword: model.get('password')
         },

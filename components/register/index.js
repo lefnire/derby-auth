@@ -7,7 +7,7 @@ exports.init = function(model) {
 }
 
 exports.create = function(model, dom) {
-    model.on('set', 'username', function(username){
+    model.on('change', 'username', function(username){
         if (!username) return
         try {
             check(username).isAlphanumeric();
@@ -17,7 +17,7 @@ exports.create = function(model, dom) {
         }
     });
 
-    model.on('set', 'email', function(email){
+    model.on('change', 'email', function(email){
         if (!email) return
         try {
             check(email).isEmail();
@@ -27,7 +27,7 @@ exports.create = function(model, dom) {
         }
     });
 
-    model.on('set', 'passwordConfirmation', function(passwordConfirmation){
+    model.on('change', 'passwordConfirmation', function(passwordConfirmation){
         if (!passwordConfirmation) return
         try {
             check(passwordConfirmation).equals(model.get('password'));
@@ -37,7 +37,7 @@ exports.create = function(model, dom) {
         }
     });
 
-    model.on('set', 'password', function(password){
+    model.on('change', 'password', function(password){
         if (!password) return
         try {
             check(password).len(6);
@@ -47,7 +47,7 @@ exports.create = function(model, dom) {
         }
     });
 
-    model.on('set', 'errors.*', function(error){
+    model.on('change', 'errors.*', function(error){
         var m = model.get(),
             canSubmit = false;
         if (!m.errors.username && !m.errors.email && !m.errors.passwordConfirmation && !m.errors.password &&
@@ -62,11 +62,11 @@ exports.usernameBlur = function(){
     // check username not already registered
     var model = this.model,
         rootModel = model.parent().parent(),
-        q = rootModel.query('users').withUsername(model.get('username'));
-    rootModel.fetch(q, function(err, users) {
+        q = rootModel.query('users', {'auth.local.username':model.get('username'), $limit: 1});
+    rootModel.fetch(q, function(err) {
         try {
             if (err) throw new Error(err);
-            var userObj = users.get()
+            var userObj = q.get()[0]
             if (userObj) throw new Error('Username already taken');
         } catch (err) {
             model.set('errors.username', err.message);
@@ -78,11 +78,11 @@ exports.emailBlur = function(){
     // check email not already registered
     var model = this.model,
         rootModel = model.parent().parent(),
-        q = rootModel.query('users').withEmail(model.get('email'));
-    rootModel.fetch(q, function(err, users) {
+        q = rootModel.query('users', {'auth.local.email':model.get('email'), $limit:1});
+    rootModel.fetch(q, function(err) {
         try {
             if (err) throw new Error(err);
-            var userObj = users.get()
+            var userObj = q.get()[0]
             if (userObj) throw new Error('Email already taken');
         } catch (err) {
             model.set('errors.email', err.message);

@@ -1,15 +1,15 @@
-var derby = require('derby');
+var app = require('derby').createApp(module);
 
-// initialize components (must come before derby.createApp)
-derby.use(require('derby-ui-boot'));
-derby.use(require('../../ui'));
-derby.use(require('../../../components'));
-
-var app = derby.createApp(module);
+app
+    .use(require('derby-ui-boot'))
+    .use(require('../../ui'))
+    .use(require('../../../components'));
 
 app.get('/', function(page, model) {
-  model.query('users').withId(model.get('_userId')).subscribe(function(err, user) {
-    model.ref('_user', user);
+  var user = model.at('users.' +  model.get('_session.userId'));
+  user.subscribe(function(err) {
+    if (err) throw err
+    model.ref('_page.user', user);
     page.render();
   });
 });
