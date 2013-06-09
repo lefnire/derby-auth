@@ -31,8 +31,7 @@
         "passport": "*",
         "passport-local": "*",
         "connect-flash": "*",
-        "lodash": "*",
-        "guid": "*",
+        "lodash": "~1.2.1",
         "nodemailer": "*",
         "validator": "*",
         "express": "*"

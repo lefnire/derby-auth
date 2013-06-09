@@ -23,8 +23,7 @@ module.exports.middleware = function(strategies, options) {
     _.defaults(options, {
         failureRedirect: '/',
         domain: "http://localhost:3000",
-        schema: {},
-        allowPurl: false
+        schema: {}
     });
 
     expressApp.use(flash());
@@ -180,23 +179,6 @@ function setupPassport(strategies, options) {
  * hass been initialized
  */
 function setupStaticRoutes(expressApp, strategies, options) {
-
-    // Persistent URLs (PURLs) (eg, http://localhost/users/{guid})
-    // tests if UUID was used (bookmarked private url), and restores that session
-    // Workflowy uses this method, for example
-    expressApp.get('/users/:uid', function(req, res, next) {
-        if (!options.allowPurl) return next();
-
-        var uid = req.params.uid,
-            sess = req.getModel().session;
-
-        // if not already logged in , and is legit uid
-        if ((sess.userId !== uid) && !sess.loggedIn && (require('guid').isGuid(uid))) {
-            // TODO check if in database - issue with accessControl which is on current uid
-            sess.userId = uid;
-        }
-        return res.redirect('/');
-    });
 
     // POST /login
     //   Use passport.authenticate() as route middleware to authenticate the
