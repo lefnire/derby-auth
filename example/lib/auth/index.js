@@ -9,7 +9,7 @@ app.get('/', function(page, model) {
   var user = model.at('users.' +  model.get('_session.userId'));
   user.subscribe(function(err) {
     if (err) throw err
-    model.ref('_page.user', user);
+    model.ref('_session.user', user);
     page.render();
   });
 });

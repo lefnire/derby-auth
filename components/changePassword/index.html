@@ -1,5 +1,5 @@
 <changePassword:>
-    {{#if _page.user.auth.local}}
+    {{#if _session.user.auth.local}}
         {#with :self}
             <form id="derby-auth-change-password" x-bind="submit:submitPasswordChange">
 
