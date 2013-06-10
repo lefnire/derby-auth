@@ -145,7 +145,7 @@ function setupPassport(strategies, options) {
                 // If facebook user exists, log that person in. If not, associate facebook user
                 // with currently "staged" user account - then log them in
 
-                var $currUser = model.at('users.' + req.session.userId);
+                var $currUser = model.at('users.' + req.session.userId),
                     $provider = {$limit: 1};
                 $provider['auth.' + profile.provider + '.id'] = profile.id;
                 $provider = model.query('users', $provider);
