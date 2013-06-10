@@ -88,7 +88,7 @@ var
     , options = { domain: 'http://localhost:3000' }
     ;
 
-//auth.store(store);
+auth.store(store);
 
 expressApp
     .use(express.favicon())
@@ -96,8 +96,6 @@ expressApp
     .use(express.bodyParser())
     .use(app.scripts(store))
     .use(express["static"](__dirname + '/../../public'))
-    .use(racerBrowserChannel(store))
-    .use(store.modelMiddleware())
     .use(express.cookieParser())
     .use(express.session({
         secret: process.env.SESSION_SECRET || 'YOUR SECRET HERE',
@@ -106,6 +104,8 @@ expressApp
             safe: true
         })
     }))
+    .use(racerBrowserChannel(store))
+    .use(store.modelMiddleware())
 
     /**
      * (2)

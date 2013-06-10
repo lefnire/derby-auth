@@ -3,15 +3,11 @@ var passport = require('passport')
     , flash = require('connect-flash') // used for setting error messages
     , _  = require('lodash')
     , expressApp = require('express')()
-    //, setupStore = require('./store')
     , utils = require('./utils')
     , nodemailer = require("nodemailer")
   ;
 
-//TODO implement access control
-//module.exports.store = function(store, customAccessControl) {
-//    setupStore(store, customAccessControl);
-//}
+module.exports.store = require('./store');
 
 /**
  * Provides "mounted" (sub-app) middleware which provides authentication for DerbyJS

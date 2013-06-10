@@ -34,7 +34,8 @@
         "lodash": "~1.2.1",
         "nodemailer": "*",
         "validator": "*",
-        "express": "*"
+        "express": "*",
+        "racer-util": "*"
     },
     "scripts": {
         "start": "node example/server.js"
