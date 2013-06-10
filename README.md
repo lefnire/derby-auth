@@ -1,5 +1,7 @@
 # Derby.js Authentication
 
+NOTE: Please use the [0.5 branch](https://github.com/lefnire/derby-auth/tree/0.5) if you're using Derby/Racer 0.5
+
 Provides authentication middleware (using [Passport](http://passportjs.org/)) for use in your Derby projects.
 
 ###Step 1
@@ -63,9 +65,6 @@ If you want drop-in Login and Register forms, including form validation, use the
 ```
 
 See the [example](https://github.com/lefnire/derby-auth/tree/master/example) for more details, as well as login / registration forms, sign-in buttons, etc.
-
-## Roadmap
-See my [Workflowy](https://workflowy.com/shared/2a5229b2-64b1-8f5c-e649-4b61c0a1e32a/)
 
 ## Why not EveryAuth?
 This project was originally implemented with Everyauth ([see branch](https://github.com/lefnire/derby-auth/tree/everyauth)), but had some issues:
