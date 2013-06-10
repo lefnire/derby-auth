@@ -1,5 +1,7 @@
 # Derby.js Authentication
 
+NOTE: This 0.5 upgrade is a WIP, and may not be stable.
+
 Provides authentication middleware (using [Passport](http://passportjs.org/)) for use in your Derby projects.
 
 ###Step 1
@@ -24,6 +26,13 @@ var
 ```
 
 ###Step 2
+Initialize the Store (queries, accessControl, etc)
+```javascript
+// initialize queries and accessControl
+auth.store(store);
+```
+
+###Step 3
 Use derby-auth's mounted middleware
 ```javascript
 .use(store.modelMiddleware())
@@ -56,9 +65,6 @@ If you want drop-in Login and Register forms, including form validation, use the
 ```
 
 See the [example](https://github.com/lefnire/derby-auth/tree/master/example) for more details, as well as login / registration forms, sign-in buttons, etc.
-
-## TODO
-This upgrade is a WIP, and may not be stable. Additionally, we'll want to wait for Racer 0.5 access control before using this in production.
 
 ## Why not EveryAuth?
 This project was originally implemented with Everyauth ([see branch](https://github.com/lefnire/derby-auth/tree/everyauth)), but had some issues:
