@@ -78,7 +78,8 @@ module.exports = function(store) {
 
     function protectRead (shareRequest, next) {
         if (shareRequest.collection !== 'users') return next();
-        if (shareRequest.docName === shareRequest.agent.connectSession.userId) return next();
+        if (shareRequest.agent.connectSession)
+            if (shareRequest.docName === shareRequest.agent.connectSession.userId) return next();
         return next(new Error('Not allowed to fetch users who are not you.'));
     }
 
