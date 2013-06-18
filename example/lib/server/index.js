@@ -88,12 +88,12 @@ var
     , options = { domain: 'http://localhost:3000' }
     ;
 
-auth.store(store);
+auth.store.init(store);
+auth.store.basicUserAccess(store);
 
 expressApp
     .use(express.favicon())
     .use(express.compress())
-    .use(express.bodyParser())
     .use(app.scripts(store))
     .use(express["static"](__dirname + '/../../public'))
     .use(express.cookieParser())
@@ -104,6 +104,8 @@ expressApp
             safe: true
         })
     }))
+    .use(express.bodyParser())
+    .use(express.methodOverride())
     .use(racerBrowserChannel(store))
     .use(store.modelMiddleware())
 
