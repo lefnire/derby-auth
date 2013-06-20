@@ -1,11 +1,11 @@
-var utils = require('../../utils')
+var utils = require('../../utils.coffee')
 
 exports.init = function(model) {
 }
 
 exports.create = function(model, dom) {
     // sorry but we need jquery, especially for ajax
-    if (!window.$) require('../../vendor/jquery-1.8.3.min.js');
+    if (!window.$) require('../../vendor/jquery-1.10.1.min.js');
 }
 
 exports.usernameBlur = function(){

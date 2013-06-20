@@ -3,7 +3,7 @@ LocalStrategy = require("passport-local").Strategy
 flash = require("connect-flash")
 _ = require("lodash")
 expressApp = require("express")()
-utils = require("./utils")
+utils = require("./utils.coffee")
 nodemailer = require("nodemailer")
 
 # used for setting error messages

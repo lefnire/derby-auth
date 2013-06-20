@@ -1,7 +1,7 @@
 var validator = require('../../node_modules/validator/validator-min'),
     check = validator.check,
     sanitize = validator.sanitize,
-    utils = require('../../utils')
+    utils = require('../../utils.coffee')
 
 exports.init = function(model) {
 }

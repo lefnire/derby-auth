@@ -1,14 +1,14 @@
 var validator = require('../../node_modules/validator/validator-min'),
     check = validator.check,
     sanitize = validator.sanitize,
-    utils = require('../../utils')
+    utils = require('../../utils.coffee')
 
 exports.init = function(model) {
 }
 
 exports.create = function(model, dom) {
     // sorry but we need jquery, especially for ajax
-    if (!window.$) require('../../vendor/jquery-1.8.3.min.js');
+    if (!window.$) require('../../vendor/jquery-1.10.1.min.js');
 
     model.on('change', 'password', function(password){
         if (!password) return
