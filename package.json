@@ -27,14 +27,14 @@
     "lib": "lib"
   },
   "dependencies": {
-    "passport": "*",
-    "passport-local": "*",
-    "connect-flash": "*",
+    "passport": "~0.1.17",
+    "passport-local": "~0.1.6",
+    "connect-flash": "~0.1.1",
     "lodash": "~1.2.1",
-    "nodemailer": "*",
-    "validator": "*",
-    "express": "*",
-    "racer-util": "*",
+    "nodemailer": "~0.4.4",
+    "validator": "~1.2.1",
+    "express": "~3.2.6",
+    "racer-util": "0.0.6",
     "coffee-script": "~1.6.3"
   },
   "scripts": {

@@ -7,16 +7,16 @@
     "derby": "git://github.com/codeparty/derby#master",
     "racer": "git://github.com/codeparty/racer#master",
     "derby-ui-boot": "git://github.com/codeparty/derby-ui-boot#master",
+    "livedb-mongo": "git://github.com/share/livedb-mongo#master",
     "racer-browserchannel": "git://github.com/codeparty/racer-browserchannel#master",
-    "livedb-mongo": "*",
-    "express": "*",
-    "connect-mongo": "*",
-    "redis": "*",
-    "passport-facebook": "*",
-    "passport-twitter": "*",
-    "passport-linkedin": "*",
-    "passport-github": "*",
-    "coffeeify": "*"
+    "express": "~3.2.6",
+    "connect-mongo": "~0.3.2",
+    "redis": "~0.8.3",
+    "passport-facebook": "~0.1.5",
+    "passport-twitter": "~0.1.5",
+    "passport-linkedin": "~0.1.3",
+    "passport-github": "~0.1.5",
+    "coffeeify": "~0.5.1"
   },
   "private": true
 }
