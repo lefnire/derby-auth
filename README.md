@@ -26,22 +26,14 @@ var
 ```
 
 ###Step 2
-Initialize the Store (queries, accessControl, etc)
+Initialize the Store. `auth.store.init` will add some required helper functions (see the code for details), and `auth.store.basicUserAccess` will add default access-control on the 'users' colleciton. This is likely not what you want, it's just there as a starting point and an example - so more than likely you'll exclude that line and replace with your own accessControl function.
 ```javascript
-// initialize queries and accessControl
-auth.store(store);
+auth.store.init(store);
+auth.store.basicUserAccess(store); // replace this with your own accessControl logic eventually
 ```
 
 ###Step 3
-Use derby-auth's mounted middleware
-```javascript
-.use(store.modelMiddleware())
-// derby-auth.middleware is inserted after modelMiddleware and before the app router to pass server accessible data to a model
-.use(auth.middleware(strategies, options))
-.use(app.router())
-```
-
-Also, *make sure* your express app is using sessions:
+Make sure your express app is using sessions (obviously) & body-parsing (for form-data)
 ```javascript
 # Uncomment and supply secret to add Derby session handling
 # Derby session middleware creates req.session and socket.io sessions
@@ -50,12 +42,15 @@ Also, *make sure* your express app is using sessions:
   secret: process.env.SESSION_SECRET || 'YOUR SECRET HERE'
   cookie: {maxAge: ONE_YEAR}
 )
+.use(express.bodyParser())
 ```
 
-And finaly, we need to add form data parsing support:
+Use derby-auth's mounted middleware
 ```javascript
-// Uncomment to add form data parsing support
-.use(express.bodyParser())
+.use(store.modelMiddleware())
+// derby-auth.middleware is inserted after modelMiddleware and before the app router to pass server accessible data to a model
+.use(auth.middleware(strategies, options))
+.use(app.router())
 ```
 
 ###Step 4 (optional, recommended)
