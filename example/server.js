@@ -1,3 +1,4 @@
+require('coffee-script')
 if (process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'debug') {
     require('./lib/server').listen(3000);
 } else {
