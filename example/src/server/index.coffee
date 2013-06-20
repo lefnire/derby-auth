@@ -5,11 +5,9 @@ racerBrowserChannel = require('racer-browserchannel')
 LiveDbMongo = require('livedb-mongo').LiveDbMongo
 MongoStore = require('connect-mongo')(express)
 app = require('../auth')
-error = require('./serverError')
+serverError = require('./serverError')
 mongoskin = require('mongoskin')
 publicDir = require('path').join __dirname + '/../../public'
-
-auth = require 'derby-auth'
 
 expressApp = module.exports = express()
 
@@ -101,11 +99,9 @@ expressApp
     .use(racerBrowserChannel(store))
     .use(store.modelMiddleware())
 
-    ###
-    (2)
-    derbyAuth.middleware is inserted after modelMiddleware and before the app router to pass server accessible data to a model
-    Pass in {store} (sets up accessControl & queries), {strategies} (see above), and options
-    ###
+    # (2)
+    # derbyAuth.middleware is inserted after modelMiddleware and before the app router to pass server accessible data to a model
+    # Pass in {store} (sets up accessControl & queries), {strategies} (see above), and options
     .use(auth.middleware(strategies, options))
 
     .use(app.router())
