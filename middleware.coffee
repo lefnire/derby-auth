@@ -13,7 +13,7 @@ Provides "mounted" (sub-app) middleware which provides authentication for DerbyJ
 @param {strategies} A hash of strategy objects and their configurations. See https://github.com/lefnire/derby-examples/blob/master/authentication/src/server/index.coffee
 @param {options} TODO document this
 ###
-module.exports.middleware = (strategies, options) ->
+module.exports = (strategies, options) ->
 
   # Setup default options
   _.defaults options,
@@ -47,8 +47,6 @@ setupMiddleware = (strategies, options) ->
     return next()  if req.is("json") # don't create new users / authenticate on REST calls
     model = req.getModel()
     sess = req.session
-    model.set "_session.loggedIn", sess.passport and sess.passport.user
-    model.set "_session.userId", sess.userId
 
     # set any error / success messages
     model.set "_session.flash", req.flash()
@@ -58,9 +56,13 @@ setupMiddleware = (strategies, options) ->
       schema = _.cloneDeep(options.schema)
       _.defaults schema, # make sure user schema is defaulted with at least {auth:{}}
         auth: {}
-
       sess.userId = model.add("users", schema)
+
+    model.set "_session.loggedIn", sess.passport and sess.passport.user
+    model.set "_session.userId", sess.userId
+
     next()
+
 setupPassport = (strategies, options) ->
 
   # Passport session setup.
