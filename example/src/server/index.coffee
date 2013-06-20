@@ -27,19 +27,15 @@ redis.select process.env.REDIS_DB or 8
 
 # Get Mongo configuration
 mongoUrl = process.env.NODE_DB_URI or "mongodb://localhost:27017/derby-auth"
-mongo = mongoskin.db(mongoUrl + "?auto_reconnect",
-  safe: true
-)
+mongo = mongoskin.db "#{mongoUrl}?auto_reconnect", {safe: true}
 
 # The store creates models and syncs data
-store = derby.createStore(
+store = derby.createStore
   db: new LiveDbMongo(mongo)
   redis: redis
-)
 
 store.on 'bundle', (browserify) ->
   browserify.transform coffeeify
-
 
 ###
 (1)
@@ -47,8 +43,8 @@ Setup a hash of strategies you'll use - strategy objects and their configuration
 Note, API keys should be stored as environment variables (eg, process.env.FACEBOOK_KEY, process.env.FACEBOOK_SECRET)
 rather than a configuration file. We're storing it in conf.js for demo purposes.
 ###
-auth = require("../../../index") # change to `require('derby-auth')` in your project
-keys = require("./conf")
+auth = require("../../../index.js") # change to `require('derby-auth')` in your project
+keys = require("./conf.coffee")
 strategies =
   facebook:
     strategy: require("passport-facebook").Strategy
@@ -94,9 +90,9 @@ expressApp
     .use(express['static'](publicDir))
     .use(express.cookieParser())
     .use(express.session({
-        secret: process.env.SESSION_SECRET || 'YOUR SECRET HERE',
+        secret: process.env.SESSION_SECRET || 'YOUR SECRET HERE'
         store: new MongoStore({
-            url: mongoUrl,
+            url: mongoUrl
             safe: true
         })
     }))
@@ -116,5 +112,4 @@ expressApp
     .use(expressApp.router)
     .use(serverError())
 
-expressApp.all "*", (req, res, next) ->
-  next "404: " + req.url
+expressApp.all "*", (req, res, next) -> next("404: #{req.url}")
