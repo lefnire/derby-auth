@@ -1,4 +1,4 @@
-deepCopy = require("racer-util/object").deepCopy
+deepCopy = require("racer/lib/util").deepCopy
 
 ###
 Sets up onQuery & onChange convenience methods so we can write accessControl methods. Moved to util.js because

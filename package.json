@@ -34,7 +34,7 @@
     "nodemailer": "~0.4.4",
     "validator": "~1.2.1",
     "express": "~3.2.6",
-    "racer-util": "0.0.6",
+    "racer": "git://github.com/codeparty/racer#master",
     "coffee-script": "~1.6.3"
   },
   "scripts": {
