@@ -5,7 +5,6 @@
   "main": "./server.js",
   "dependencies": {
     "derby": "git://github.com/codeparty/derby#master",
-    "racer": "git://github.com/codeparty/racer#master",
     "derby-ui-boot": "git://github.com/codeparty/derby-ui-boot#master",
     "livedb-mongo": "git://github.com/share/livedb-mongo#master",
     "racer-browserchannel": "git://github.com/codeparty/racer-browserchannel#master",
