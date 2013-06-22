@@ -70,9 +70,8 @@ strategies =
 
 
 # optional parameters passed into derby-auth.init, domain is required due to some Passport technicalities,
-# allowPurl lets people access non-authenticated accounts at /:uuid, and schema sets up default user
-# account schema structures
-options = domain: "http://localhost:3000"
+# See derby-auth/middeware.coffee for options
+options = site: domain: "http://localhost:3000"
 
 auth.store.init(store)
 auth.store.basicUserAccess(store)

@@ -36,33 +36,33 @@
         {{/}}
 
         <h2>Connect With</h2>
-        {{#if _session.user.auth.facebook}}
-            <p><span class="label">facebook</span><pre class="prettyprint">_session.user.auth.facebook.name = {{_session.user.auth.facebook.name}}</pre></p>
+        {{#if _page.user.facebook}}
+            <p><span class="label">facebook</span><pre class="prettyprint">_page.user.facebook.name = {{_page.user.facebook.name}}</pre></p>
         {{else}}
             <a class="btn" href='/auth/facebook'>Facebook</a>
         {{/}}
 
-        {{#if _session.user.auth.linkedin}}
-            <p><span class="label">linkedin</span><pre class="prettyprint">_session.user.auth.linkedin.name = {{_session.user.auth.linkedin.name}}</pre></p>
+        {{#if _page.user.linkedin}}
+            <p><span class="label">linkedin</span><pre class="prettyprint">_page.user.linkedin.name = {{_page.user.linkedin.name}}</pre></p>
         {{else}}
             <a class="btn" href='/auth/linkedin'>LinkedIn</a>
         {{/}}
 
-        {{#if _session.user.auth.github}}
-            <p><span class="label">github</span><pre class="prettyprint">_session.user.auth.github.name = {{_session.user.auth.github.name}}</pre></p>
+        {{#if _page.user.github}}
+            <p><span class="label">github</span><pre class="prettyprint">_page.user.github.name = {{_page.user.github.name}}</pre></p>
         {{else}}
             <a class="btn" href='/auth/github'>Github</a>
         {{/}}
 
-        {{#if _session.user.auth.twitter}}
-            <p><span class="label">twitter</span><pre class="prettyprint">_session.user.auth.twitter.name = {{_session.user.auth.twitter.name}}</pre></p>
+        {{#if _page.user.twitter}}
+            <p><span class="label">twitter</span><pre class="prettyprint">_page.user.twitter.name = {{_page.user.twitter.name}}</pre></p>
         {{else}}
             <a class="btn" href='/auth/twitter'>Twitter</a>
         {{/}}
 
         <p>
-            {{#if _session.user.auth.local}}
-                <p><span class="label">registration</span><pre class="prettyprint">_session.user.auth.local.username = {{_session.user.auth.local.username}}</pre></p>
+            {{#if _page.user.local}}
+                <p><span class="label">registration</span><pre class="prettyprint">_page.user.local.username = {{_page.user.local.username}}</pre></p>
                 <hr/>
                 <derby-auth:changePassword />
             {{else}}
