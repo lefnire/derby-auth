@@ -38,10 +38,10 @@ Make sure your express app is using sessions (obviously) & body-parsing (for for
 # Uncomment and supply secret to add Derby session handling
 # Derby session middleware creates req.session and socket.io sessions
 .use(express.cookieParser())
-.use(store.sessionMiddleware
-  secret: process.env.SESSION_SECRET || 'YOUR SECRET HERE'
-  cookie: {maxAge: ONE_YEAR}
-)
+.use(express.session({
+    secret: 'YOUR SECRET HERE',
+    store: new MongoStore({url: mongoUrl, safe: true})
+}))
 .use(express.bodyParser())
 ```
 
