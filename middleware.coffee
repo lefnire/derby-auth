@@ -6,7 +6,33 @@ expressApp = require("express")()
 utils = require("./utils.coffee")
 nodemailer = require("nodemailer")
 
-# used for setting error messages
+###
+Utility functions
+-------------------
+###
+_loginUser = (model, req, uid, done) ->
+  req.session.userId = uid
+
+  # done() sets req.user, which is later referenced to determine _session.loggedIn
+  model.set "users." + uid + ".auth.timestamps.loggedin", +new Date, ->
+    done null, uid
+
+sendEmail = (mailData, options) ->
+  unless (options and options.smtpService and options.smtpUser and options.smtpPass)
+    return console.err "Unable to send email from derby-auth, proviede email credentials as options param {smtpService, smtpUser, smtpPass}"
+
+  # create reusable transport method (opens pool of SMTP connections)
+  smtpTransport = nodemailer.createTransport "SMTP",
+    service: options.smtpService
+    auth:
+      user: options.smtpUser
+      pass: options.smtpPass
+
+  # send mail with defined transport object
+  smtpTransport.sendMail mailData, (error, response) ->
+    return console.error error if error
+    console.log "Message sent: " + response.message
+    smtpTransport.close() # shut down the connection pool, no more messages
 
 ###
 Provides "mounted" (sub-app) middleware which provides authentication for DerbyJS
@@ -17,9 +43,14 @@ module.exports = (strategies, options) ->
 
   # Setup default options
   _.defaults options,
-    failureRedirect: "/"
-    domain: "http://localhost:3000"
-    schema: {}
+    failureRedirect:  "/"
+    domain:           "http://localhost:3000"
+    schema:           {}
+    smtpService:      process.env.SMTP_SERVICE
+    smtpUser:         process.env.SMTP_USER
+    smtpPass:         process.env.SMTP_PASS
+    siteName:         process.env.SITE_NAME or 'My Site'
+    siteEmail:        process.env.siteEmail or 'admin@mysite.com'
 
   expressApp.use flash()
 
@@ -76,8 +107,7 @@ setupPassport = (strategies, options) ->
   # Use the LocalStrategy within Passport.
   #   Strategies in passport require a `verify` function, which accept
   #   credentials (in this case, a username and password), and invoke a callback
-  #   with a user object.  In the real world, this would query a database;
-  #   however, in this example we are using a baked-in set of users.
+  #   with a user object.
   passport.use new LocalStrategy(
     passReqToCallback: true # required so we can access model.getModel()
   , (req, username, password, done) ->
@@ -277,11 +307,12 @@ setupStaticRoutes = (expressApp, strategies, options) ->
       $email.set "auth.local.salt", salt
       $email.set "auth.local.hashed_password", hashed_password
       sendEmail
-        from: "HabitRPG <admin@habitrpg.com>"
+        from: "#{options.siteName} <#{options.siteEmail}>"
         to: email
-        subject: "Password Reset for HabitRPG"
-        text: "Password for " + userObj.auth.local.username + " has been reset to " + newPassword + ". Log in at https://habitrpg.com"
-        html: "Password for <strong>" + userObj.auth.local.username + "</strong> has been reset to <strong>" + newPassword + "</strong>. Log in at https://habitrpg.com"
+        subject: "Password Reset for #{options.siteName}"
+        text: "Password for " + userObj.auth.local.username + " has been reset to " + newPassword + ". Log in at #{options.domain}"
+        html: "Password for <strong>" + userObj.auth.local.username + "</strong> has been reset to <strong>" + newPassword + "</strong>. Log in at #{options.domain}"
+      , options
 
       res.send "New password sent to " + email
 
@@ -312,35 +343,4 @@ setupStaticRoutes = (expressApp, strategies, options) ->
   #        if (req.isAuthenticated()) { return next(); }
   #        res.redirect('/login')
   #    }
-
-###
-Utility functions
--------------------
-###
-_loginUser = (model, req, uid, done) ->
-  req.session.userId = uid
-
-  # done() sets req.user, which is later referenced to determine _session.loggedIn
-  model.set "users." + uid + ".auth.timestamps.loggedin", +new Date, ->
-    done null, uid
-
-sendEmail = (mailData) ->
-
-  # create reusable transport method (opens pool of SMTP connections)
-  # TODO derby-auth isn't currently configurable here, if you need customizations please send pull request
-  smtpTransport = nodemailer.createTransport("SMTP",
-    service: process.env.SMTP_SERVICE
-    auth:
-      user: process.env.SMTP_USER
-      pass: process.env.SMTP_PASS
-  )
-
-  # send mail with defined transport object
-  smtpTransport.sendMail mailData, (error, response) ->
-    if error
-      console.log error
-    else
-      console.log "Message sent: " + response.message
-    smtpTransport.close() # shut down the connection pool, no more messages
-
 

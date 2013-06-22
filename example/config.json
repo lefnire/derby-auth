@@ -4,6 +4,8 @@
   "REDIS_DB": 8,
   "PORT": 3000,
   "NODE_ENV": "development",
+  "SITE_NAME": "My Site",
+  "SITE_EMAIL": "admin@mysite.com",
 
   "fb": {
     "appId": "111565172259433",
