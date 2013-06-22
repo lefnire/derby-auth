@@ -65,28 +65,13 @@ setupMiddleware = (strategies, options) ->
 
 setupPassport = (strategies, options) ->
 
-  # Passport session setup.
-  #   To support persistent login sessions, Passport needs to be able to
-  #   serialize users into and deserialize users out of the session.  Typically,
-  #   this will be as simple as storing the user ID when serializing, and finding
-  #   the user by ID when deserializing.
+  # Passport has these methods for serializing / deserializing users to req.session.passport.user. This works for
+  # static apps, but since Derby is realtime and we'll be retrieving users in a model.subscribe to _page.user, we let
+  # the app handle that and we simply serialize/deserialize the id, such that req.session.passport.user = {id}
   passport.serializeUser (uid, done) ->
     done null, uid
-
   passport.deserializeUser (id, done) ->
     done null, id
-
-
-    # TODO Revisit:
-    # Because we're logging a user into req.session on passport strategy authentication,
-    # we don't need to deserialize the user. (Plus the app will be pulling the user out of the
-    # database manually via model.fetch / .subscribe). Additionally, attempting to deserialize the user here
-    # by fetching from the database yields "Error: Model mutation performed after bundling for clientId:..."
-    #var q = model.query('users').withId(id);
-    #         _fetchUser(q, model, function(err, userObj){
-    #         if(err && !err.notFound) return done(err);
-    #         _loginUser(model, userObj, done);
-    #         });
 
   # Use the LocalStrategy within Passport.
   #   Strategies in passport require a `verify` function, which accept
