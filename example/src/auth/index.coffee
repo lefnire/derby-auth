@@ -2,7 +2,7 @@ app = require("derby").createApp(module)
 app
   .use(require("derby-ui-boot"))
   .use(require("../../ui"))
-  .use require("../../../components")
+  .use require("../../../components/index.coffee")
 
 app.get "/", (page, model) ->
   $user = model.at "auth.#{model.get("_session.userId")}"

@@ -57,6 +57,7 @@ strategies =
     conf:
       clientID: conf.get('github:appId')
       clientSecret: conf.get('github:appSecret')
+      # You can optionally pass in per-strategy configuration options (consult Passport documentation)
       callbackURL: "http://127.0.0.1:3000/auth/github/callback"
 
   twitter:
@@ -64,17 +65,27 @@ strategies =
     conf:
       consumerKey: conf.get('twit:consumerKey')
       consumerSecret: conf.get('twit:consumerSecret')
-
-      # You can optionally pass in per-strategy configuration options (consult Passport documentation)
       callbackURL: "http://127.0.0.1:3000/auth/twitter/callback"
 
+###
+(1.5)
+Optional parameters passed into auth.middleware(). Most of these will get sane defaults, so it's not entirely necessary
+to pass in this object - but I want to show you here to give you a feel. @see derby-auth/middeware.coffee for options
+###
+options =
+  passport:
+    failureRedirect: '/'
+    successRedirect: '/'
+  site:
+    domain: 'http://localhost:3000'
+    name: 'My Site'
+    email: 'admin@mysite.com'
+  smtp:
+    service: 'Gmail'
+    user: 'admin@mysite.com'
+    pass: 'abc'
 
-# optional parameters passed into derby-auth.init, domain is required due to some Passport technicalities,
-# See derby-auth/middeware.coffee for options
-options = site: domain: "http://localhost:3000"
-
-auth.store.init(store)
-auth.store.basicUserAccess(store)
+auth.store(store)
 
 expressApp
     .use(express.favicon())

@@ -1,11 +1,14 @@
 deepCopy = require("racer/lib/util").deepCopy
 
+module.exports = (store) ->
+  init(store)
+  accessControl(store)
+
 ###
 Sets up onQuery & onChange convenience methods so we can write accessControl methods. Moved to util.js because
 they might be moved to racer core in the future.
 ###
-module.exports.init = (store) ->
-
+init = (store) ->
   ###
   Assign the connect session to ShareJS's useragent (there is 1 useragent per
   browser tab or window that is connected to our server via browserchannel).
@@ -54,7 +57,7 @@ module.exports.init = (store) ->
       shareRequest.query = deepCopy(shareRequest.query)
       callback shareRequest.query, session, next
 
-module.exports.basicUserAccess = (store) ->
+accessControl = (store) ->
 
   ###
   Delegate to ShareJS directly to protect fetches and subscribes. Will try to

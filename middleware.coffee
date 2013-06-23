@@ -306,8 +306,8 @@ setupStaticRoutes = (expressApp, strategies, options) ->
       auth = $email.get()[0]
       return res.send(500, "Couldn't find a user registered for email " + email)  unless auth
       req._isServer = true # our bypassing of session-based accessControl
-      $email.set "local.salt", salt
-      $email.set "local.hashed_password", hashed_password
+      model.set "auth.#{auth.id}.local.salt", salt
+      model.set "auth.#{auth.id}.local.hashed_password", hashed_password
       sendEmail
         from: "#{options.site.name} <#{options.site.email}>"
         to: email
@@ -317,7 +317,6 @@ setupStaticRoutes = (expressApp, strategies, options) ->
       , options
 
       res.send "New password sent to " + email
-
 
   expressApp.post "/password-change", (req, res, next) ->
     model = req.getModel()
