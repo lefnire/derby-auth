@@ -10,6 +10,15 @@ nodemailer = require("nodemailer")
 Utility functions
 -------------------
 ###
+login = (user, req, done) ->
+  req.session.userId = user.id
+  done null, user
+
+logout = (req, res) ->
+  delete req.session.userId
+  req.logout()
+  res.redirect "/"
+
 sendEmail = (mailData, options) ->
   unless (options and options.smtp.service and options.smtp.user and options.smtp.pass)
     return console.error """
@@ -87,7 +96,6 @@ module.exports = (strategies, options) ->
     model.set "_session.loggedIn", req.isAuthenticated()
     model.set "_session.userId", req.user
     if req.user
-      req.session.userId = req.user
       #FIXME optimize: any other place we can put this so we're not fetch/setting all over creation?
       $q = model.at "auth.#{req.user}"
       $q.fetch (err) -> $q.set("timestamps.loggedin", +new Date, next)
@@ -140,11 +148,10 @@ setupPassport = (strategies, options) ->
         "local.hashed_password": hashed
         $limit: 1
       $unamePass.fetch (err) ->
-        return done(err)  if err # real error
+        return done(err) if err # real error
         auth = $unamePass.get()?[0]
-        unless auth # user not found
-          return done null, false, message: "Invalid password."
-        done(null, auth)
+        return done(null, false, message: "Invalid password.") unless auth
+        login auth, req, done
 
   _.each strategies, (obj, name) ->
 
@@ -177,13 +184,13 @@ setupPassport = (strategies, options) ->
 
         # User already registered with this provider, login
         if auth?[profile.provider]
-          return done(null, auth)
+          login auth, req, done
 
         # User already registered, but not with this oauth account - tie to their existing account
         else if currUser
           # FIXME setDiff isn't working here for some reason
           $currUser.set "#{profile.provider}", profile, ->
-            $currUser.set "timestamps.registered", +new Date, ->done(null, currUser)
+            $currUser.set "timestamps.registered", +new Date, ->login(currUser, req, done)
 
         # User not yet registered, create new user
         else
@@ -191,7 +198,7 @@ setupPassport = (strategies, options) ->
             id: model.id()
             timestamps: registered: +new Date
           newAuth[profile.provider] = profile
-          model.add "auth", newAuth, -> done(null, newAuth)
+          model.add "auth", newAuth, ->login(newAuth, req, done)
 
 ###
 Routes (Including Passport Routes)
@@ -230,7 +237,7 @@ setupStaticRoutes = (expressApp, strategies, options) ->
     $uname = model.query "auth",
       'local.username': req.body.username
       $limit: 1
-    $currUser = model.at "auth." + model.get("_session.userId")
+    $currUser = model.at "auth." + req.session.userId
     model.fetch $uname, $currUser, (err) ->
       return next(err) if err
 
@@ -260,8 +267,10 @@ setupStaticRoutes = (expressApp, strategies, options) ->
       if currUser
         $currUser.set "local", localAuth, thenLogin
       else
+        id = model.id()
+        req.session.userId = id # required due to our accessControl restriction on `auth` collection
         currUser =
-          id: model.id()
+          id: id
           local: localAuth
           timestamps: registered: +new Date
         model.add "auth", currUser, thenLogin
@@ -286,9 +295,7 @@ setupStaticRoutes = (expressApp, strategies, options) ->
     expressApp.get "/auth/#{name}/callback", passport.authenticate(name, options.passport), (req, res) ->
       res.redirect options.passport.successRedirect
 
-  expressApp.get "/logout", (req, res) ->
-    req.logout()
-    res.redirect "/"
+  expressApp.get "/logout", logout
 
   expressApp.post "/password-reset", (req, res, next) ->
     model = req.getModel()
