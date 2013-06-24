@@ -70,10 +70,8 @@ module.exports = (strategies, options) ->
       service:          process.env.SMTP_SERVICE
       user:             process.env.SMTP_USER
       pass:             process.env.SMTP_PASS
-
   _.defaults options, defaults
-  _.each defaults, (v,k) ->
-    _.defaults options[k], v
+  _.each defaults, (v,k) -> _.defaults(options[k], v)
 
   setupPassport strategies, options
 
@@ -89,6 +87,7 @@ module.exports = (strategies, options) ->
     model.set "_session.loggedIn", req.isAuthenticated()
     model.set "_session.userId", req.user
     if req.user
+      req.session.userId = req.user
       #FIXME optimize: any other place we can put this so we're not fetch/setting all over creation?
       $q = model.at "auth.#{req.user}"
       $q.fetch (err) -> $q.set("timestamps.loggedin", +new Date, next)
