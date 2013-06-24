@@ -93,9 +93,9 @@ module.exports = (strategies, options) ->
   expressApp.use (req, res, next) ->
     model = req.getModel()
     model.set "_session.flash", req.flash() # set any error / success messages
-    model.set "_session.loggedIn", req.isAuthenticated()
-    model.set "_session.userId", req.user
-    if req.user
+    model.set "_session.userId", req.session.userId
+    if req.isAuthenticated()
+      model.set "_session.loggedIn", true
       #FIXME optimize: any other place we can put this so we're not fetch/setting all over creation?
       $q = model.at "auth.#{req.user}"
       $q.fetch (err) -> $q.set("timestamps.loggedin", +new Date, next)
