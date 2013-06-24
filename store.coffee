@@ -2,19 +2,6 @@ _ = require "lodash"
 deepCopy = require("racer/lib/util").deepCopy
 
 ###
-  {store} The Racer store. Needed for setting up accessControl
-  {mongo} The initialized mongoskin object. The reason we need this is to run db.ensureIndexes() on first run,
-    and we may need in the future to access sensitive auth properties due to missing mongo projections feature
-    in Racer 0.5 (@see http://goo.gl/mloKO)
-###
-module.exports = (store, mongo, strategies) ->
-  # FIXME this is very much needed, but commented out because causing https://gist.github.com/lefnire/6f585109187eb06338fc
-  #ensureIndexes(mongo, strategies)
-
-  init(store)
-  accessControl(store)
-
-###
 Sets up db indexes
 ###
 ensureIndexes = (mongo, strategies) ->
@@ -73,7 +60,7 @@ init = (store) ->
   ###
   store.onQuery = (collectionName, callback) ->
     @shareClient.use "query", (shareRequest, next) ->
-      return next()  if collectionName isnt shareRequest.collection
+      return next() if collectionName isnt shareRequest.collection
       session = shareRequest.agent.connectSession
       shareRequest.query = deepCopy(shareRequest.query)
       callback shareRequest.query, session, next
@@ -89,15 +76,15 @@ accessControl = (store) ->
   store.shareClient.use "fetch", protectRead
 
   protectRead = (shareRequest, next) ->
-    return next()  if shareRequest.collection isnt "users"
-    return next()  if shareRequest.docName is shareRequest.agent.connectSession.userId  if shareRequest.agent.connectSession
+    return next() if shareRequest.collection isnt "auth"
+    return next() if shareRequest.docName is shareRequest.agent.connectSession.userId
     next new Error("Not allowed to fetch users who are not you.")
 
   ###
   Only allow users to modify or delete themselves. Only allow the server to
   create users.
   ###
-  store.onChange "users", (docId, opData, snapshotData, session, isServer, next) ->
+  store.onChange "auth", (docId, opData, snapshotData, session, isServer, next) ->
     if docId is (session and session.userId)
       next()
     else if opData.del
@@ -109,3 +96,16 @@ accessControl = (store) ->
         next new Error("Not allowed to create users.")
     else
       next new Error("Not allowed to update users who are not you.")
+
+###
+  {store} The Racer store. Needed for setting up accessControl
+  {mongo} The initialized mongoskin object. The reason we need this is to run db.ensureIndexes() on first run,
+    and we may need in the future to access sensitive auth properties due to missing mongo projections feature
+    in Racer 0.5 (@see http://goo.gl/mloKO)
+###
+module.exports = (store, mongo, strategies) ->
+  # FIXME this is very much needed, but commented out because causing https://gist.github.com/lefnire/6f585109187eb06338fc
+  # ensureIndexes(mongo, strategies)
+
+  init(store)
+  accessControl(store)
