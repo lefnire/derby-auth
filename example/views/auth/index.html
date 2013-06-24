@@ -3,21 +3,26 @@
 
 <Header:>
 	<ui:connectionAlert>
-
-<Body:>
+  <div class="navbar navbar-inverse navbar-fixed-top">
+      <div class="navbar-inner">
+          <div class="container">
+            <!-- Be sure to leave the brand out there if you want it shown -->
+            <span class="brand">Derby-Auth</span>
+            {{#if _session.loggedIn}}
+              <a class="btn pull-right" href="/logout">Logout</a>
+            {{/}}
+          </div>
+      </div>
+  </div>
+  <div class="container">
 
     {{#if _session.loggedIn}}
-        <div class="navbar navbar-inverse navbar-fixed-top">
-            <div class="navbar-inner">
-                <div class="container">
-                    <!-- Be sure to leave the brand out there if you want it shown -->
-                    <span class="brand">Logged In</span>
-                    <a class="btn pull-right" href="/logout">Logout</a>
-                </div>
-            </div>
-        </div>
+      <div class="alert alert-success">
+        You are now logged in!
+      </div>
     {{/}}
 
+<Body:>
     <div class="well">
         {{#if _session.flash.error}}
             <ul class="alert alert-error">
