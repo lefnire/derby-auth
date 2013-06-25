@@ -97,7 +97,7 @@ module.exports = (strategies, options) ->
     if req.isAuthenticated()
       model.set "_session.loggedIn", true
       #FIXME optimize: any other place we can put this so we're not fetch/setting all over creation?
-      $q = model.at "auth.#{req.user}"
+      $q = model.at "auth.#{req.session.userId}"
       $q.fetch (err) -> $q.set("timestamps.loggedin", +new Date, next)
     else next()
 
@@ -113,7 +113,9 @@ setupPassport = (strategies, options) ->
 
   # Passport has these methods for serializing / deserializing users to req.session.passport.user. This works for
   # static apps, but since Derby is realtime and we'll be retrieving users in a model.subscribe to _page.user, we let
-  # the app handle that and we simply serialize/deserialize the id, such that req.session.passport.user = {id}
+  # the app handle that and we simply serialize/deserialize the id, such that req.session.passport.user = {id}.
+  # Even then, we don't really use req.user because we need userId on `req.session`, not just `req`, due to how ShareJS
+  # operates - so we manually set req.session.userId throughout this module, and these two functions become useless
   passport.serializeUser (user, done) ->
     done null, user.id
   passport.deserializeUser (id, done) ->
@@ -169,7 +171,7 @@ setupPassport = (strategies, options) ->
 
       # If facebook user exists, log that person in. If not, associate facebook user
       # with currently "staged" user account - then log them in
-      $currUser = model.at("auth." + req.user)
+      $currUser = model.at("auth." + req.session.userId)
       $provider = $limit: 1
       $provider["#{profile.provider}.id"] = profile.id
       $provider = model.query("auth", $provider)
@@ -188,17 +190,18 @@ setupPassport = (strategies, options) ->
 
         # User already registered, but not with this oauth account - tie to their existing account
         else if currUser
-          # FIXME setDiff isn't working here for some reason
           $currUser.set "#{profile.provider}", profile, ->
             $currUser.set "timestamps.registered", +new Date, ->login(currUser, req, done)
 
         # User not yet registered, create new user
         else
+          id = model.id()
+          req.session.userId = id # required due to our accessControl restriction on `auth` collection
           newAuth =
-            id: model.id()
+            id: id
             timestamps: registered: +new Date
           newAuth[profile.provider] = profile
-          model.add "auth", newAuth, ->login(newAuth, req, done)
+          model.set "auth.#{id}", newAuth, ->login(newAuth, req, done)
 
 ###
 Routes (Including Passport Routes)
