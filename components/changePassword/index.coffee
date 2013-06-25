@@ -7,7 +7,7 @@ jQuery = undefined
 exports.init = (model) ->
 
 exports.create = (model, dom) ->
-    jQuery = window?.jQuery or require('../../vendor/jquery-1.10.1.min.js')
+    #jQuery = window?.jQuery or require('../../vendor/jquery-1.10.1.min.js')
 
     model.on 'change', 'password', (password) ->
         return unless password

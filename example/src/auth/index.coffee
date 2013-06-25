@@ -5,7 +5,7 @@ app
   .use require("../../../components/index.coffee")
 
 app.get "/", (page, model) ->
-  $user = model.at "auth.#{model.get("_session.userId")}"
+  $user = model.at "auths.#{model.get("_session.userId")}"
   $user.subscribe (err) ->
     throw err if err
     model.ref "_page.user", $user

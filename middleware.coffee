@@ -97,7 +97,7 @@ module.exports = (strategies, options) ->
     if req.isAuthenticated()
       model.set "_session.loggedIn", true
       #FIXME optimize: any other place we can put this so we're not fetch/setting all over creation?
-      $q = model.at "auth.#{req.session.userId}"
+      $q = model.at "auths.#{req.session.userId}"
       $q.fetch (err) -> $q.set("timestamps.loggedin", +new Date, next)
     else next()
 
@@ -134,7 +134,7 @@ setupPassport = (strategies, options) ->
     # username, or the password is not correct, set the user to `false` to
     # indicate failure and set a flash message.  Otherwise, return the
     # authenticated `user`.
-    $uname = model.query "auth",
+    $uname = model.query "auths",
       "local.username": username
       $limit: 1
     $uname.fetch (err) ->
@@ -145,7 +145,7 @@ setupPassport = (strategies, options) ->
 
       # We needed the whole user object first so we can get his salt to encrypt password comparison
       hashed = utils.encryptPassword(password, auth.local.salt)
-      $unamePass = model.query "auth",
+      $unamePass = model.query "auths",
         "local.username": username
         "local.hashed_password": hashed
         $limit: 1
@@ -171,10 +171,10 @@ setupPassport = (strategies, options) ->
 
       # If facebook user exists, log that person in. If not, associate facebook user
       # with currently "staged" user account - then log them in
-      $currUser = model.at("auth." + req.session.userId)
+      $currUser = model.at("auths." + req.session.userId)
       $provider = $limit: 1
       $provider["#{profile.provider}.id"] = profile.id
-      $provider = model.query("auth", $provider)
+      $provider = model.query("auths", $provider)
       model.fetch $provider, $currUser, (err) ->
         return done(err) if err
         auth = $provider.get()?[0]
@@ -201,7 +201,7 @@ setupPassport = (strategies, options) ->
             id: id
             timestamps: registered: +new Date
           newAuth[profile.provider] = profile
-          model.set "auth.#{id}", newAuth, ->login(newAuth, req, done)
+          model.set "auths.#{id}", newAuth, ->login(newAuth, req, done)
 
 ###
 Routes (Including Passport Routes)
@@ -237,10 +237,10 @@ setupStaticRoutes = (expressApp, strategies, options) ->
 
   expressApp.post "/register", (req, res, next) ->
     model = req.getModel()
-    $uname = model.query "auth",
+    $uname = model.query "auths",
       'local.username': req.body.username
       $limit: 1
-    $currUser = model.at "auth." + req.session.userId
+    $currUser = model.at "auths." + req.session.userId
     model.fetch $uname, $currUser, (err) ->
       return next(err) if err
 
@@ -276,7 +276,7 @@ setupStaticRoutes = (expressApp, strategies, options) ->
           id: id
           local: localAuth
           timestamps: registered: +new Date
-        model.add "auth", currUser, thenLogin
+        model.add "auths", currUser, thenLogin
 
   _.each strategies, (strategy, name) ->
     params = strategy.params or {}
@@ -306,7 +306,7 @@ setupStaticRoutes = (expressApp, strategies, options) ->
     salt = utils.makeSalt()
     newPassword = utils.makeSalt() # use a salt as the new password too (they'll change it later)
     hashed_password = utils.encryptPassword(newPassword, salt)
-    $email = model.query("auth",
+    $email = model.query("auths",
       "local.email": email
       $limit: 1
     )
@@ -315,8 +315,8 @@ setupStaticRoutes = (expressApp, strategies, options) ->
       auth = $email.get()[0]
       return res.send(500, "Couldn't find a user registered for email " + email)  unless auth
       req._isServer = true # our bypassing of session-based accessControl
-      model.set "auth.#{auth.id}.local.salt", salt
-      model.set "auth.#{auth.id}.local.hashed_password", hashed_password
+      model.set "auths.#{auth.id}.local.salt", salt
+      model.set "auths.#{auth.id}.local.hashed_password", hashed_password
       sendEmail
         from: "#{options.site.name} <#{options.site.email}>"
         to: email
@@ -330,16 +330,16 @@ setupStaticRoutes = (expressApp, strategies, options) ->
   expressApp.post "/password-change", (req, res, next) ->
     model = req.getModel()
     uid = req.body.uid
-    $user = model.at("auth." + uid)
+    $user = model.at("auths." + uid)
     $user.fetch (err) ->
       auth = $user.get()[0]
       if err or !auth
         return res.send 500, err or "Couldn't find that user (this shouldn't be happening, contact Tyler: http://goo.gl/nrx99)"
-      salt = userObj.local.salt
+      salt = auth.local.salt
       hashed_old_password = utils.encryptPassword(req.body.oldPassword, salt)
       hashed_new_password = utils.encryptPassword(req.body.newPassword, salt)
       return res.send(500, "Old password doesn't match")  if hashed_old_password isnt auth.local.hashed_password
-      $user.set "auth.local.hashed_password", hashed_new_password
+      $user.set "local.hashed_password", hashed_new_password
       res.send 200
 
   # Simple route middleware to ensure user is authenticated.

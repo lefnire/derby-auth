@@ -5,7 +5,7 @@ deepCopy = require("racer/lib/util").deepCopy
 Sets up db indexes
 ###
 ensureIndexes = (mongo, strategies) ->
-  ensure = mongo.collection('auth').ensureIndex
+  ensure = mongo.collection('auths').ensureIndex
   ensure {'local.username': 1}, {background: true}, (err, replies) ->
   # Go through each provider the website is using and create indexes like {facebook.id: 1}
   _.each strategies, (obj, name) ->
@@ -76,7 +76,7 @@ accessControl = (store) ->
   store.shareClient.use "fetch", protectRead
 
   protectRead = (shareRequest, next) ->
-    return next() if shareRequest.collection isnt "auth"
+    return next() if shareRequest.collection isnt "auths"
     return next() if shareRequest.docName is shareRequest.agent.connectSession.userId
     next new Error("Not allowed to fetch users who are not you.")
 
@@ -84,7 +84,7 @@ accessControl = (store) ->
   Only allow users to modify or delete themselves. Only allow the server to
   create users.
   ###
-  store.onChange "auth", (docId, opData, snapshotData, session, isServer, next) ->
+  store.onChange "auths", (docId, opData, snapshotData, session, isServer, next) ->
     if docId is (session and session.userId)
       next()
     else if opData.del

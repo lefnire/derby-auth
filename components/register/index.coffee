@@ -48,7 +48,7 @@ exports.usernameBlur = () ->
     # check username not already registered
     model = @model
     rootModel = model.parent().parent()
-    $q = rootModel.query('auth', {'local.username': model.get('username'), $limit: 1})
+    $q = rootModel.query('auths', {'local.username': model.get('username'), $limit: 1})
     $q.fetch (err) ->
         try
             throw new Error(err) if (err)
@@ -60,7 +60,7 @@ exports.emailBlur = () ->
     # check email not already registered
     model = @model
     rootModel = model.parent().parent()
-    $q = rootModel.query('auth', {'local.email': model.get('email'), $limit:1})
+    $q = rootModel.query('auths', {'local.email': model.get('email'), $limit:1})
     $q.fetch (err) ->
         try
             throw new Error(err) if (err)

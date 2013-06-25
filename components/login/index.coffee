@@ -4,13 +4,13 @@ jQuery = undefined
 exports.init = (model) ->
 
 exports.create = (model, dom) ->
-  jQuery = window?.jQuery or require('../../vendor/jquery-1.10.1.min.js')
+  #jQuery = window?.jQuery or require('../../vendor/jquery-1.10.1.min.js')
 
 exports.usernameBlur = ->
     # check username registered
     model = @model
     rootModel = model.parent().parent()
-    $q = rootModel.query 'auth', {'local.username': model.get('username'), $limit: 1}
+    $q = rootModel.query 'auths', {'local.username': model.get('username'), $limit: 1}
     $q.fetch (err) ->
         try
             throw new Error(err) if err
@@ -31,7 +31,7 @@ exports.submitPasswordReset = () ->
     # check username registered
     model = @model
     rootModel = model.parent().parent()
-    $q = rootModel.query('auth', {'local.email': model.get('passwordResetEmail'), $limit: 1});
+    $q = rootModel.query('auths', {'local.email': model.get('passwordResetEmail'), $limit: 1});
     $q.fetch (err) ->
         try
             throw new Error(err) if err
