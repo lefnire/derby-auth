@@ -79,6 +79,8 @@ module.exports = (strategies, options) ->
       service:          process.env.SMTP_SERVICE
       user:             process.env.SMTP_USER
       pass:             process.env.SMTP_PASS
+    usernameField: 'username'
+
   _.defaults options, defaults
   _.each defaults, (v,k) -> _.defaults(options[k], v)
 
@@ -126,17 +128,19 @@ setupPassport = (strategies, options) ->
   #   credentials (in this case, a username and password), and invoke a callback
   #   with a user object.
   passport.use new LocalStrategy
-    passReqToCallback: true # required so we can access model.getModel()
+    passReqToCallback: true, # required so we can access model.getModel()
+    usernameField: options.usernameField # required so passport knows what field to auth against
   , (req, username, password, done) ->
     model = req.getModel()
+    authQuery = 
+      $limit: 1
 
+    authQuery['local.'+options.usernameField] = username
     # Find the user by username.  If there is no user with the given
     # username, or the password is not correct, set the user to `false` to
     # indicate failure and set a flash message.  Otherwise, return the
     # authenticated `user`.
-    $uname = model.query "auths",
-      "local.username": username
-      $limit: 1
+    $uname = model.query "auths", authQuery
     $uname.fetch (err) ->
       return done(err) if err # real error
       auth = $uname.get()[0]
@@ -145,10 +149,9 @@ setupPassport = (strategies, options) ->
 
       # We needed the whole user object first so we can get his salt to encrypt password comparison
       hashed = utils.encryptPassword(password, auth.local.salt)
-      $unamePass = model.query "auths",
-        "local.username": username
-        "local.hashed_password": hashed
-        $limit: 1
+      authQuery["local.hashed_password"] = hashed
+
+      $unamePass = model.query "auths", authQuery
       $unamePass.fetch (err) ->
         return done(err) if err # real error
         auth = $unamePass.get()?[0]
@@ -237,18 +240,22 @@ setupStaticRoutes = (expressApp, strategies, options) ->
 
   expressApp.post "/register", (req, res, next) ->
     model = req.getModel()
-    $uname = model.query "auths",
-      'local.username': req.body.username
+    authQuery = 
       $limit: 1
+
+    authQuery['local.'+options.usernameField] = req.body[options.usernameField]
+
+    $uname = model.query "auths", authQuery
     $currUser = model.at "auths." + req.session.userId
     model.fetch $uname, $currUser, (err) ->
       return next(err) if err
 
       if $uname.get()?[0]
-        req.flash 'error', "That username is already registered"
+        req.flash 'error', "That "+options.usernameField+" is already registered"
         return res.redirect(options.passport.failureRedirect)
 
       currUser = $currUser.get()
+      # what to do here?
       if currUser?.local?.username
         req.flash 'error', "You are already registered"
         return res.redirect(options.passport.failureRedirect)
@@ -321,8 +328,8 @@ setupStaticRoutes = (expressApp, strategies, options) ->
         from: "#{options.site.name} <#{options.site.email}>"
         to: email
         subject: "Password Reset for #{options.site.name}"
-        text: "Password for " + auth.local.username + " has been reset to " + newPassword + ". Log in at #{options.site.domain}"
-        html: "Password for <strong>" + auth.local.username + "</strong> has been reset to <strong>" + newPassword + "</strong>. Log in at #{options.site.domain}"
+        text: "Password for " + auth.local[options.usernameField] + " has been reset to " + newPassword + ". Log in at #{options.site.domain}"
+        html: "Password for <strong>" + auth.local[options.usernameField]+ "</strong> has been reset to <strong>" + newPassword + "</strong>. Log in at #{options.site.domain}"
       , options
 
       res.send "New password sent to " + email

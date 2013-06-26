@@ -1,6 +1,6 @@
 {
 
-  "MONGO_URL": "mongodb://localhost:27017/derby-auth",
+  "MONGO_URL": "mongodb://localhost:27017/derby-auth2",
   "REDIS_DB": 8,
   "PORT": 3000,
   "NODE_ENV": "development",
