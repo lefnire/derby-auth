@@ -3,76 +3,93 @@
 
 <Header:>
 	<ui:connectionAlert>
+  <div class="navbar navbar-inverse navbar-fixed-top">
+      <div class="navbar-inner">
+          <div class="container">
+            <!-- Be sure to leave the brand out there if you want it shown -->
+            <span class="brand">Derby-Auth</span>
+            {{#if _session.loggedIn}}
+              <a class="btn pull-right" href="/logout">Logout</a>
+            {{/}}
+          </div>
+      </div>
+  </div>
+  <div class="container">
+
+    {{#if _session.loggedIn}}
+      <div class="alert alert-success">
+        You are now logged in!
+      </div>
+    {{/}}
 
 <Body:>
-
-    {#if _loggedIn}
-        <div class="navbar navbar-inverse navbar-fixed-top">
-            <div class="navbar-inner">
-                <div class="container">
-                    <!-- Be sure to leave the brand out there if you want it shown -->
-                    <span class="brand">Logged In</span>
-                    <a class="btn pull-right" href="/logout">Logout</a>
-                </div>
-            </div>
-        </div>
-    {/}
-
     <div class="well">
-        {#if _flash}
-            {#if _flash.error}
-                <ul class="alert alert-error">
-                    {#each _flash.error as :error}<li>{:error}</li>{/}
-                </ul>
-            {/}
+        {{#if _session.flash.error}}
+            <ul class="alert alert-error">
+            {{#each _session.flash.error as :error}}
+                <li>{{:error}}</li>
+            {{/}}
+            </ul>
+        {{/}}
 
-            {#if _flash.info}
-                <ul class="alert alert-success">
-                    {#each _flash.info as :info}<li>{:info}</li>{/}
-                </ul>
-            {/}
-
-        {/}
+        {{#if _flash.info}}
+            <ul class="alert alert-success">
+            {{#each _session.flash.info as :info}}
+                <li>{{:info}}</li>
+            {/}}
+            </ul>
+        {{/}}
 
         <h2>Connect With</h2>
-        {#if _user.auth.facebook}
-            <p><span class="label">facebook</span><pre class="prettyprint">_user.auth.facebook.name = {_user.auth.facebook.name}</pre></p>
-        {else}
+        {{#if _page.user.facebook}}
+            <p><span class="label">facebook</span><pre class="prettyprint">_page.user.facebook.name = {{_page.user.facebook.name}}</pre></p>
+        {{else}}
             <a class="btn" href='/auth/facebook'>Facebook</a>
-        {/}
+        {{/}}
 
-        {#if _user.auth.linkedin}
-            <p><span class="label">linkedin</span><pre class="prettyprint">_user.auth.linkedin.name = {_user.auth.linkedin.name}</pre></p>
-        {else}
+        {{#if _page.user.linkedin}}
+            <p><span class="label">linkedin</span><pre class="prettyprint">_page.user.linkedin.name = {{_page.user.linkedin.name}}</pre></p>
+        {{else}}
             <a class="btn" href='/auth/linkedin'>LinkedIn</a>
-        {/}
+        {{/}}
 
-        {#if _user.auth.github}
-            <p><span class="label">github</span><pre class="prettyprint">_user.auth.github.name = {_user.auth.github.name}</pre></p>
-        {else}
+        {{#if _page.user.github}}
+            <p><span class="label">github</span><pre class="prettyprint">_page.user.github.name = {{_page.user.github.name}}</pre></p>
+        {{else}}
             <a class="btn" href='/auth/github'>Github</a>
-        {/}
+        {{/}}
 
-        {#if _user.auth.twitter}
-            <p><span class="label">twitter</span><pre class="prettyprint">_user.auth.twitter.name = {_user.auth.twitter.name}</pre></p>
-        {else}
+        {{#if _page.user.twitter}}
+            <p><span class="label">twitter</span><pre class="prettyprint">_page.user.twitter.name = {{_page.user.twitter.name}}</pre></p>
+        {{else}}
             <a class="btn" href='/auth/twitter'>Twitter</a>
-        {/}
+        {{/}}
 
         <p>
-            {#if _user.auth.local}
-                <p><span class="label">registration</span><pre class="prettyprint">_user.auth.local.username = {_user.auth.local.username}</pre></p>
+            {{#if _page.user.local}}
+                <p><span class="label">registration</span><pre class="prettyprint">_page.user.local.username = {{_page.user.local.username}}</pre></p>
                 <hr/>
                 <derby-auth:changePassword />
-            {else}
-                <boot:tabs>
-                    <boot:tab title="Login">
+            {{else}}
+                <!-- FIXME the tabs aren't switching, revisit -->
+                <!--<boot:tabs>
+                    <boot:tab title=Login >
                         <derby-auth:login />
                     </boot:tab>
-                    <boot:tab title="Register">
+                    <boot:tab title=Register >
                         <derby-auth:register />
                     </boot:tab>
-                </boot:tabs>
-            {/}
+                </boot:tabs>-->
+                <div class=row-fluid>
+                    <div class=span6>
+                        <h4>Login</h4>
+                        <derby-auth:login />
+                    </div>
+                    <div class=span6>
+                        <h4>Register</h4>
+                        <derby-auth:register />
+                    </div>
+                </div>
+            {{/}}
         </p>
     </div>

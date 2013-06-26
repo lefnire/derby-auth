@@ -1,43 +1,43 @@
 {
-    "name": "derby-auth",
-    "description": "Provides authentication for DerbyJS projects",
-    "version": "0.0.29",
-    "main": "./index.js",
-    "homepage": "https://github.com/lefnire/derby-auth/",
-    "repository": {
-        "type": "git",
-        "url": "git://github.com/lefnire/derby-auth.git"
-    },
-    "author": {
-        "name": "Tyler Renelle",
-        "email": "tylerrenelle@gmail.com",
-        "url": "https://github.com/lefnire/"
-    },
-    "keywords": [
-        "auth",
-        "oauth",
-        "password",
-        "facebook",
-        "twitter",
-        "authorization",
-        "authentication",
-        "derby"
-    ],
-    "main": "./index.js",
-    "directories": {
-        "lib": "lib"
-    },
-    "dependencies": {
-        "passport": "*",
-        "passport-local": "*",
-        "connect-flash": "*",
-        "lodash": "*",
-        "guid": "*",
-        "nodemailer": "*",
-        "validator": "*",
-        "express": "*"
-    },
-    "scripts": {
-        "start": "node example/server.js"
-    }
+  "name": "derby-auth",
+  "description": "Provides authentication for DerbyJS projects",
+  "version": "0.0.29",
+  "main": "./index.js",
+  "homepage": "https://github.com/lefnire/derby-auth/",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/lefnire/derby-auth.git"
+  },
+  "author": {
+    "name": "Tyler Renelle",
+    "email": "tylerrenelle@gmail.com",
+    "url": "https://github.com/lefnire/"
+  },
+  "keywords": [
+    "auth",
+    "oauth",
+    "password",
+    "facebook",
+    "twitter",
+    "authorization",
+    "authentication",
+    "derby"
+  ],
+  "directories": {
+    "lib": "lib"
+  },
+  "dependencies": {
+    "passport": "~0.1.17",
+    "passport-local": "~0.1.6",
+    "connect-flash": "~0.1.1",
+    "lodash": "~1.2.1",
+    "nodemailer": "~0.4.4",
+    "validator": "~1.2.1",
+    "express": "~3.2.6",
+    "racer": "git://github.com/codeparty/racer#master",
+    "coffee-script": "~1.6.3"
+  },
+  "scripts": {
+    "start": "node example/server.js"
+  }
 }
