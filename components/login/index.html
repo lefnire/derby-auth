@@ -3,7 +3,7 @@
         <form id="derby-auth-login" action='/login' method='post'>
 
             <div class="control-group {#if .errors.username}error{/}">
-                <input type='text' name="username" placeholder="email"  value="{.email}"/>
+                <input type='text' name="username" placeholder="Username" x-bind="blur:usernameBlur" value="{.username}"/>
                 <span class="help-inline">{.errors.username}</span>
             </div>
 
