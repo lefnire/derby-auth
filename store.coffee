@@ -73,7 +73,7 @@ accessControl = (store) ->
   to the developer using racer.
   ###
   store.shareClient.use "subscribe", protectRead
-  # store.shareClient.use "fetch", protectRead
+  store.shareClient.use "fetch", protectRead
 
   protectRead = (shareRequest, next) ->
     return next() if shareRequest.collection isnt "auths"
