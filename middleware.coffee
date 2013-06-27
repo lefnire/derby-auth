@@ -112,6 +112,8 @@ module.exports = (strategies, options) ->
       successRedirect:  "/"
       failureFlash:     true
       registerCallback: null
+      passReqToCallback:  true
+      usernameField:      'username'
     site:
       domain:           "http://localhost:3000"
       name:             "My Site"
@@ -120,7 +122,6 @@ module.exports = (strategies, options) ->
       service:          process.env.SMTP_SERVICE
       user:             process.env.SMTP_USER
       pass:             process.env.SMTP_PASS
-    usernameField: 'username'
 
   _.defaults options, defaults
   _.each defaults, (v,k) -> _.defaults(options[k], v)
@@ -171,15 +172,12 @@ setupPassport = (strategies) ->
   #   Strategies in passport require a `verify` function, which accept
   #   credentials (in this case, a username and password), and invoke a callback
   #   with a user object.
-  passport.use new LocalStrategy
-    passReqToCallback: true, # required so we can access model.getModel()
-    usernameField: options.usernameField # required so passport knows what field to auth against
-  , (req, username, password, done) ->
+  passport.use new LocalStrategy, opts.passport, (req, username, password, done) ->
     model = req.getModel()
     authQuery = 
       $limit: 1
 
-    authQuery['local.'+options.usernameField] = username
+    authQuery['local.'+opts.passport.usernameField] = username
     # Find the user by username.  If there is no user with the given
     # username, or the password is not correct, set the user to `false` to
     # indicate failure and set a flash message.  Otherwise, return the
@@ -273,7 +271,7 @@ setupStaticRoutes = (expressApp, strategies) ->
     authQuery = 
       $limit: 1
 
-    authQuery['local.'+options.usernameField] = req.body[options.usernameField]
+    authQuery['local.'+opts.passport.usernameField] = req.body[opts.passport.usernameField]
 
     $uname = model.query "auths", authQuery
     $currUser = model.at "auths." + req.session.userId
@@ -281,8 +279,8 @@ setupStaticRoutes = (expressApp, strategies) ->
       return next(err) if err
 
       if $uname.get()?[0]
-        req.flash 'error', "That "+options.usernameField+" is already registered"
-        return res.redirect(options.passport.failureRedirect)
+        req.flash 'error', "That "+opts.passport.usernameField+" is already registered"
+        return res.redirect(opts.passport.failureRedirect)
 
       currUser = $currUser.get()
       # what to do here?
@@ -342,10 +340,9 @@ setupStaticRoutes = (expressApp, strategies) ->
       sendEmail
         from: "#{opts.site.name} <#{opts.site.email}>"
         to: email
-        subject: "Password Reset for #{options.site.name}"
-        text: "Password for " + auth.local[options.usernameField] + " has been reset to " + newPassword + ". Log in at #{options.site.domain}"
-        html: "Password for <strong>" + auth.local[options.usernameField]+ "</strong> has been reset to <strong>" + newPassword + "</strong>. Log in at #{options.site.domain}"
-      , options
+        subject: "Password Reset for #{opts.site.name}"
+        text: "Password for " + auth.local[opts.passport.usernameField] + " has been reset to " + newPassword + ". Log in at #{opts.site.domain}"
+        html: "Password for <strong>" + auth.local[opts.passport.usernameField]+ "</strong> has been reset to <strong>" + newPassword + "</strong>. Log in at #{opts.site.domain}"
 
       res.send "New password sent to " + email
 
