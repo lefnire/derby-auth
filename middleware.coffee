@@ -305,6 +305,8 @@ setupStaticRoutes = (expressApp, strategies) ->
         salt: salt
         hashed_password: utils.encryptPassword(req.body.password, salt)
 
+      # Allows for login fields to be something other than username or email
+      localAuth[opts.passport.usernameField] = req.body[opts.passport.usernameField]
       register $currUser, 'local', localAuth, req, res, next
 
   _.each strategies, (strategy, name) ->
