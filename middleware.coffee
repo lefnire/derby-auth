@@ -222,15 +222,14 @@ setupPassport = (strategies) ->
       model.fetch $provider, $currUser, (err) ->
         return done(err) if err
         auth = $provider.get()?[0]
-        currUser = $currUser.get()
-
-        # Append accessToken & refreshToken to user's provider profile. They're often required, and
-        # I see many other auth libraries doing this - if anyone is concerned about security, please contact me
-        [profile.accessToken, profile.refreshToken] = [accessToken, refreshToken]
 
         # User already registered with this provider, login
         if auth?[profile.provider]
           login auth, req, null, done
+
+        # Append accessToken & refreshToken to user's provider profile. They're often required, and
+        # I see many other auth libraries doing this - if anyone is concerned about security, please contact me
+        [profile.accessToken, profile.refreshToken] = [accessToken, refreshToken]
 
         register($currUser, profile.provider, profile, req, null, done)
 
@@ -279,8 +278,7 @@ setupStaticRoutes = (expressApp, strategies) ->
         req.flash 'error', "That username is already registered"
         return res.redirect(opts.passport.failureRedirect)
 
-      currUser = $currUser.get()
-      if currUser?.local?.username
+      if $currUser.get()?.local?.username
         req.flash 'error', "You are already registered"
         return res.redirect(opts.passport.failureRedirect)
 
