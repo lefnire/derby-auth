@@ -12,6 +12,14 @@ opts = undefined
 Utility functions
 -------------------
 ###
+
+createUserId = (req, res, next) ->
+  model = req.getModel()
+  userId = req.session.userId || (req.session.userId = model.id())
+  model.set('_session.userId', userId)
+  next()
+
+
 login = (user, req, res, done) ->
   req.session.userId = user.id
   if req.isAuthenticated() then done(null, user)
@@ -112,6 +120,8 @@ module.exports = (strategies, options) ->
       successRedirect:  "/"
       failureFlash:     true
       registerCallback: null
+      passReqToCallback:  true
+      usernameField:      'username'
     site:
       domain:           "http://localhost:3000"
       name:             "My Site"
@@ -120,6 +130,7 @@ module.exports = (strategies, options) ->
       service:          process.env.SMTP_SERVICE
       user:             process.env.SMTP_USER
       pass:             process.env.SMTP_PASS
+
   _.defaults options, defaults
   _.each defaults, (v,k) -> _.defaults(options[k], v)
 
@@ -132,6 +143,7 @@ module.exports = (strategies, options) ->
   expressApp.use flash()
   expressApp.use passport.initialize()
   expressApp.use passport.session()
+  expressApp.use createUserId
 
   # After passport does it's thing, let's use it's req.user object & req helper methods to setup our app
   expressApp.use (req, res, next) ->
@@ -169,18 +181,17 @@ setupPassport = (strategies) ->
   #   Strategies in passport require a `verify` function, which accept
   #   credentials (in this case, a username and password), and invoke a callback
   #   with a user object.
-  passport.use new LocalStrategy
-    passReqToCallback: true # required so we can access model.getModel()
-  , (req, username, password, done) ->
+  passport.use new LocalStrategy opts.passport, (req, username, password, done) ->
     model = req.getModel()
+    authQuery = 
+      $limit: 1
 
+    authQuery['local.'+opts.passport.usernameField] = username
     # Find the user by username.  If there is no user with the given
     # username, or the password is not correct, set the user to `false` to
     # indicate failure and set a flash message.  Otherwise, return the
     # authenticated `user`.
-    $uname = model.query "auths",
-      "local.username": username
-      $limit: 1
+    $uname = model.query "auths", authQuery
     $uname.fetch (err) ->
       return done(err) if err # real error
       auth = $uname.get()[0]
@@ -189,10 +200,9 @@ setupPassport = (strategies) ->
 
       # We needed the whole user object first so we can get his salt to encrypt password comparison
       hashed = utils.encryptPassword(password, auth.local.salt)
-      $unamePass = model.query "auths",
-        "local.username": username
-        "local.hashed_password": hashed
-        $limit: 1
+      authQuery["local.hashed_password"] = hashed
+
+      $unamePass = model.query "auths", authQuery
       $unamePass.fetch (err) ->
         return done(err) if err # real error
         auth = $unamePass.get()?[0]
@@ -267,18 +277,23 @@ setupStaticRoutes = (expressApp, strategies) ->
 
   expressApp.post "/register", (req, res, next) ->
     model = req.getModel()
-    $uname = model.query "auths",
-      'local.username': req.body.username
+    authQuery = 
       $limit: 1
+
+    authQuery['local.'+opts.passport.usernameField] = req.body[opts.passport.usernameField]
+
+    $uname = model.query "auths", authQuery
     $currUser = model.at "auths." + req.session.userId
     model.fetch $uname, $currUser, (err) ->
       return next(err) if err
 
       if $uname.get()?[0]
-        req.flash 'error', "That username is already registered"
+        req.flash 'error', "That "+opts.passport.usernameField+" is already registered"
         return res.redirect(opts.passport.failureRedirect)
 
-      if $currUser.get()?.local?.username
+      currUser = $currUser.get()
+      # what to do here?
+      if currUser?.local?.username
         req.flash 'error', "You are already registered"
         return res.redirect(opts.passport.failureRedirect)
 
@@ -290,6 +305,8 @@ setupStaticRoutes = (expressApp, strategies) ->
         salt: salt
         hashed_password: utils.encryptPassword(req.body.password, salt)
 
+      # Allows for login fields to be something other than username or email
+      localAuth[opts.passport.usernameField] = req.body[opts.passport.usernameField]
       register $currUser, 'local', localAuth, req, res, next
 
   _.each strategies, (strategy, name) ->
@@ -335,8 +352,8 @@ setupStaticRoutes = (expressApp, strategies) ->
         from: "#{opts.site.name} <#{opts.site.email}>"
         to: email
         subject: "Password Reset for #{opts.site.name}"
-        text: "Password for " + auth.local.username + " has been reset to " + newPassword + ". Log in at #{opts.site.domain}"
-        html: "Password for <strong>" + auth.local.username + "</strong> has been reset to <strong>" + newPassword + "</strong>. Log in at #{opts.site.domain}"
+        text: "Password for " + auth.local[opts.passport.usernameField] + " has been reset to " + newPassword + ". Log in at #{opts.site.domain}"
+        html: "Password for <strong>" + auth.local[opts.passport.usernameField]+ "</strong> has been reset to <strong>" + newPassword + "</strong>. Log in at #{opts.site.domain}"
 
       res.send "New password sent to " + email
 
