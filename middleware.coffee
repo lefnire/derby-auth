@@ -172,7 +172,7 @@ setupPassport = (strategies) ->
   #   Strategies in passport require a `verify` function, which accept
   #   credentials (in this case, a username and password), and invoke a callback
   #   with a user object.
-  passport.use new LocalStrategy, opts.passport, (req, username, password, done) ->
+  passport.use new LocalStrategy opts.passport, (req, username, password, done) ->
     model = req.getModel()
     authQuery = 
       $limit: 1
