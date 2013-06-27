@@ -6,21 +6,61 @@ expressApp = require("express")()
 utils = require("./utils.coffee")
 nodemailer = require("nodemailer")
 
+opts = undefined
+
 ###
 Utility functions
 -------------------
 ###
-login = (user, req, done) ->
+login = (user, req, res, done) ->
   req.session.userId = user.id
-  done null, user
+  if req.isAuthenticated() then done(null, user)
+  else
+    req.login user, (err) ->
+      return done(err) if err
+      if res then res.redirect opts.passport.successRedirect
+      else done(null, user)
+###
+  Register the user if all other tests passed. This either (1) creates a new user, or (2) adds this new strategy
+  to an existing user if they're registered with a different strategy
+  {$user} the model.at("auths.{ID}"). This "at" allows us to operate on the database
+  {strategy} "local", "facebook", etc
+  {data} the strategy data to save. {username,password,email,etc} for "local", {firstname,lastname,..} for "facebook", etc
+  {req}
+  {res}
+  {done}
+###
+register = ($user, strategy, data, req, res, done) ->
+  cb = ->
+    if opts.passport.registerCallback
+      opts.passport.registerCallback req, res, $user.get(), (->login $user.get(), req, res, done)
+    else login($user.get(),req,res,done)
+
+  user = $user.get()
+
+  # User already registered, but not with this strategy - tie to their existing account
+  if user
+    $user.set "#{strategy}", data, ->
+      $user.set "timestamps.registered", +new Date, cb
+
+  # User not yet registered, create new user
+  else
+    model = req.getModel()
+    id = model.id()
+    newUser = {id}
+    newUser[strategy] = data
+    newUser.timestamps = {registered: +new Date}
+    model.set "auths.#{id}", newUser, ->
+      $user = model.at "auths.#{id}"
+      cb()
 
 logout = (req, res) ->
   delete req.session.userId
   req.logout()
   res.redirect "/"
 
-sendEmail = (mailData, options) ->
-  unless (options and options.smtp.service and options.smtp.user and options.smtp.pass)
+sendEmail = (mailData) ->
+  unless (opts and opts.smtp.service and opts.smtp.user and opts.smtp.pass)
     return console.error """
           Unable to send email from derby-auth. Pass email creds as `options` param to `require('derby-auth').middleware(strategies, options)`. Structured like:
           options = {
@@ -34,10 +74,10 @@ sendEmail = (mailData, options) ->
 
   # create reusable transport method (opens pool of SMTP connections)
   smtpTransport = nodemailer.createTransport "SMTP",
-    service: options.smtp.service
+    service: opts.smtp.service
     auth:
-      user: options.smtp.user
-      pass: options.smtp.pass
+      user: opts.smtp.user
+      pass: opts.smtp.pass
 
   # send mail with defined transport object
   smtpTransport.sendMail mailData, (error, response) ->
@@ -71,6 +111,7 @@ module.exports = (strategies, options) ->
       failureRedirect:  "/"
       successRedirect:  "/"
       failureFlash:     true
+      registerCallback: null
     site:
       domain:           "http://localhost:3000"
       name:             "My Site"
@@ -84,7 +125,10 @@ module.exports = (strategies, options) ->
   _.defaults options, defaults
   _.each defaults, (v,k) -> _.defaults(options[k], v)
 
-  setupPassport strategies, options
+  # Set as closure to this file - we need these everywhere. Bad idea? memleak / security issue?
+  opts = options
+
+  setupPassport strategies
 
   # Initialize Passport.  Also use passport.session() middleware, to support persistent login sessions
   expressApp.use flash()
@@ -104,14 +148,14 @@ module.exports = (strategies, options) ->
     else next()
 
   # Setup static passport authentication routes
-  setupStaticRoutes expressApp, strategies, options
+  setupStaticRoutes expressApp, strategies
 
   expressApp
 
 ###
   Passport Setup
 ###
-setupPassport = (strategies, options) ->
+setupPassport = (strategies) ->
 
   # Passport has these methods for serializing / deserializing users to req.session.passport.user. This works for
   # static apps, but since Derby is realtime and we'll be retrieving users in a model.subscribe to _page.user, we let
@@ -156,13 +200,13 @@ setupPassport = (strategies, options) ->
         return done(err) if err # real error
         auth = $unamePass.get()?[0]
         return done(null, false, message: "Invalid password.") unless auth
-        login auth, req, done
+        login auth, req, null, done
 
   _.each strategies, (obj, name) ->
 
     # Provide default values for options not passed in
     _.defaults obj.conf,
-      callbackURL: options.site.domain + "/auth/#{name}/callback"
+      callbackURL: opts.site.domain + "/auth/#{name}/callback"
       passReqToCallback: true # required so we can access model.getModel()
 
     # Use the FacebookStrategy within Passport.
@@ -181,30 +225,16 @@ setupPassport = (strategies, options) ->
       model.fetch $provider, $currUser, (err) ->
         return done(err) if err
         auth = $provider.get()?[0]
-        currUser = $currUser.get()
+
+        # User already registered with this provider, login
+        if auth?[profile.provider]
+          login auth, req, null, done
 
         # Append accessToken & refreshToken to user's provider profile. They're often required, and
         # I see many other auth libraries doing this - if anyone is concerned about security, please contact me
         [profile.accessToken, profile.refreshToken] = [accessToken, refreshToken]
 
-        # User already registered with this provider, login
-        if auth?[profile.provider]
-          login auth, req, done
-
-        # User already registered, but not with this oauth account - tie to their existing account
-        else if currUser
-          $currUser.set "#{profile.provider}", profile, ->
-            $currUser.set "timestamps.registered", +new Date, ->login(currUser, req, done)
-
-        # User not yet registered, create new user
-        else
-          id = model.id()
-          req.session.userId = id # required due to our accessControl restriction on `auth` collection
-          newAuth =
-            id: id
-            timestamps: registered: +new Date
-          newAuth[profile.provider] = profile
-          model.set "auths.#{id}", newAuth, ->login(newAuth, req, done)
+        register($currUser, profile.provider, profile, req, null, done)
 
 ###
 Routes (Including Passport Routes)
@@ -213,7 +243,7 @@ Sets up static routes for Derby app. Normally this wouldn't be necessary, would 
 in middelware() setup. However, it breaks Derby routes - so we need this to call separately after expressApp
 hass been initialized
 ###
-setupStaticRoutes = (expressApp, strategies, options) ->
+setupStaticRoutes = (expressApp, strategies) ->
 
   # POST /login
   #   Use passport.authenticate() as route middleware to authenticate the
@@ -222,7 +252,7 @@ setupStaticRoutes = (expressApp, strategies, options) ->
   #   which, in this example, will redirect the user to the home page.
   #
   #   curl -v -d "username=bob&password=secret" http://127.0.0.1:3000/login
-  expressApp.post "/login", passport.authenticate("local", options.passport)
+  expressApp.post "/login", passport.authenticate("local", opts.passport)
 
   # POST /login
   #   This is an alternative implementation that uses a custom callback to
@@ -258,7 +288,7 @@ setupStaticRoutes = (expressApp, strategies, options) ->
       # what to do here?
       if currUser?.local?.username
         req.flash 'error', "You are already registered"
-        return res.redirect(options.passport.failureRedirect)
+        return res.redirect(opts.passport.failureRedirect)
 
       # Legit, register
       salt = utils.makeSalt()
@@ -268,22 +298,7 @@ setupStaticRoutes = (expressApp, strategies, options) ->
         salt: salt
         hashed_password: utils.encryptPassword(req.body.password, salt)
 
-      thenLogin = ->
-        req.login currUser, (err) ->
-          return next(err) if err
-          res.redirect options.passport.successRedirect
-
-      # user already registered with an oauth, tie local registration to account
-      if currUser
-        $currUser.set "local", localAuth, thenLogin
-      else
-        id = model.id()
-        req.session.userId = id # required due to our accessControl restriction on `auth` collection
-        currUser =
-          id: id
-          local: localAuth
-          timestamps: registered: +new Date
-        model.add "auths", currUser, thenLogin
+      register $currUser, 'local', localAuth, req, res, next
 
   _.each strategies, (strategy, name) ->
     params = strategy.params or {}
@@ -302,8 +317,8 @@ setupStaticRoutes = (expressApp, strategies, options) ->
     #   request.  If authentication fails, the user will be redirected back to the
     #   login page.  Otherwise, the primary route function function will be called,
     #   which, in this example, will redirect the user to the home page.
-    expressApp.get "/auth/#{name}/callback", passport.authenticate(name, options.passport), (req, res) ->
-      res.redirect options.passport.successRedirect
+    expressApp.get "/auth/#{name}/callback", passport.authenticate(name, opts.passport), (req, res) ->
+      res.redirect opts.passport.successRedirect
 
   expressApp.get "/logout", logout
 
@@ -325,7 +340,7 @@ setupStaticRoutes = (expressApp, strategies, options) ->
       model.set "auths.#{auth.id}.local.salt", salt
       model.set "auths.#{auth.id}.local.hashed_password", hashed_password
       sendEmail
-        from: "#{options.site.name} <#{options.site.email}>"
+        from: "#{opts.site.name} <#{opts.site.email}>"
         to: email
         subject: "Password Reset for #{options.site.name}"
         text: "Password for " + auth.local[options.usernameField] + " has been reset to " + newPassword + ". Log in at #{options.site.domain}"
