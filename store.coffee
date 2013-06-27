@@ -108,4 +108,4 @@ module.exports = (store, mongo, strategies) ->
   # ensureIndexes(mongo, strategies)
 
   init(store)
-  accessControl(store)
+  # accessControl(store)
