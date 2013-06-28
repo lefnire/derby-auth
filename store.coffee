@@ -73,7 +73,7 @@ accessControl = (store) ->
   to the developer using racer.
   ###
   protectRead = (shareRequest, next) ->
-    #return next() unless shareRequest.docName? and shareRequest.agent.connectSession.userId?
+    return next() unless shareRequest.docName? and shareRequest.agent.connectSession.userId?
     return next() if shareRequest.collection isnt "auths"
     return next() if shareRequest.docName is shareRequest.agent.connectSession.userId
     next new Error("Not allowed to fetch users who are not you.")

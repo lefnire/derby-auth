@@ -13,13 +13,6 @@ Utility functions
 -------------------
 ###
 
-createUserId = (req, res, next) ->
-  model = req.getModel()
-  userId = req.session.userId || (req.session.userId = model.id())
-  model.set('_session.userId', userId)
-  next()
-
-
 login = (user, req, res, done) ->
   req.session.userId = user.id
   if req.isAuthenticated() then done(null, user)
@@ -143,7 +136,6 @@ module.exports = (strategies, options) ->
   expressApp.use flash()
   expressApp.use passport.initialize()
   expressApp.use passport.session()
-  expressApp.use createUserId
 
   # After passport does it's thing, let's use it's req.user object & req helper methods to setup our app
   expressApp.use (req, res, next) ->
