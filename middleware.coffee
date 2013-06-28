@@ -12,14 +12,6 @@ opts = undefined
 Utility functions
 -------------------
 ###
-
-createUserId = (req, res, next) ->
-  model = req.getModel()
-  userId = req.session.userId || (req.session.userId = model.id())
-  model.set('_session.userId', userId)
-  next()
-
-
 login = (user, req, res, done) ->
   req.session.userId = user.id
   if req.isAuthenticated() then done(null, user)
@@ -183,14 +175,13 @@ setupPassport = (strategies) ->
   #   with a user object.
   passport.use new LocalStrategy opts.passport, (req, username, password, done) ->
     model = req.getModel()
-    authQuery = 
-      $limit: 1
 
-    authQuery['local.'+opts.passport.usernameField] = username
     # Find the user by username.  If there is no user with the given
     # username, or the password is not correct, set the user to `false` to
     # indicate failure and set a flash message.  Otherwise, return the
     # authenticated `user`.
+    authQuery =  $limit: 1
+    authQuery['local.'+opts.passport.usernameField] = username
     $uname = model.query "auths", authQuery
     $uname.fetch (err) ->
       return done(err) if err # real error
@@ -201,7 +192,6 @@ setupPassport = (strategies) ->
       # We needed the whole user object first so we can get his salt to encrypt password comparison
       hashed = utils.encryptPassword(password, auth.local.salt)
       authQuery["local.hashed_password"] = hashed
-
       $unamePass = model.query "auths", authQuery
       $unamePass.fetch (err) ->
         return done(err) if err # real error
@@ -277,11 +267,9 @@ setupStaticRoutes = (expressApp, strategies) ->
 
   expressApp.post "/register", (req, res, next) ->
     model = req.getModel()
-    authQuery = 
-      $limit: 1
 
+    authQuery = $limit: 1
     authQuery['local.'+opts.passport.usernameField] = req.body[opts.passport.usernameField]
-
     $uname = model.query "auths", authQuery
     $currUser = model.at "auths." + req.session.userId
     model.fetch $uname, $currUser, (err) ->
@@ -292,8 +280,7 @@ setupStaticRoutes = (expressApp, strategies) ->
         return res.redirect(opts.passport.failureRedirect)
 
       currUser = $currUser.get()
-      # what to do here?
-      if currUser?.local?.username
+      if currUser?.local?[opts.passport.usernameField]
         req.flash 'error', "You are already registered"
         return res.redirect(opts.passport.failureRedirect)
 
