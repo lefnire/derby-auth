@@ -76,6 +76,7 @@ options =
   passport:
     failureRedirect: '/'
     successRedirect: '/'
+    #usernameField: 'email'
   site:
     domain: 'http://localhost:3000'
     name: 'My Site'

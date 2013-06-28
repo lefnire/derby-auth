@@ -67,16 +67,17 @@ init = (store) ->
 
 accessControl = (store) ->
 
-  protectRead = (shareRequest, next) ->
-    return next() if shareRequest.collection isnt "auths"
-    return next() if shareRequest.docName is shareRequest.agent.connectSession.userId
-    next new Error("Not allowed to fetch users who are not you.")
-
   ###
   Delegate to ShareJS directly to protect fetches and subscribes. Will try to
   come up with a different interface that does not expose this much of ShareJS
   to the developer using racer.
   ###
+  protectRead = (shareRequest, next) ->
+    #return next() unless shareRequest.docName? and shareRequest.agent.connectSession.userId?
+    return next() if shareRequest.collection isnt "auths"
+    return next() if shareRequest.docName is shareRequest.agent.connectSession.userId
+    next new Error("Not allowed to fetch users who are not you.")
+    
   store.shareClient.use "subscribe", protectRead
   store.shareClient.use "fetch", protectRead
 
