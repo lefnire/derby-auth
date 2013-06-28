@@ -12,7 +12,6 @@ opts = undefined
 Utility functions
 -------------------
 ###
-
 login = (user, req, res, done) ->
   req.session.userId = user.id
   if req.isAuthenticated() then done(null, user)
