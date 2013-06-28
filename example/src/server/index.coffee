@@ -85,7 +85,6 @@ options =
     service: 'Gmail'
     user: 'admin@mysite.com'
     pass: 'abc'
-  usernameField: 'email'
 
 ###
 (2)
