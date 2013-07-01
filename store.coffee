@@ -73,7 +73,8 @@ accessControl = (store) ->
   to the developer using racer.
   ###
   protectRead = (shareRequest, next) ->
-    return next() unless shareRequest.docName? and shareRequest.agent.connectSession.userId?
+    return next() if shareRequest.agent.stream.isServer
+    return next() unless shareRequest.docName? and shareRequest.agent.connectSession?.userId?
     return next() if shareRequest.collection isnt "auths"
     return next() if shareRequest.docName is shareRequest.agent.connectSession.userId
     next new Error("Not allowed to fetch users who are not you.")
@@ -86,17 +87,12 @@ accessControl = (store) ->
   create users.
   ###
   store.onChange "auths", (docId, opData, snapshotData, session, isServer, next) ->
-    if docId is (session and session.userId)
-      next()
-    else if opData.del
-      next new Error("Not allowed to deleted users who are not you.")
+    if docId is (session and session.userId) then next()
+    else if opData.del then next new Error("Not allowed to deleted users who are not you.")
     else if opData.create
-      if isServer
-        next()
-      else
-        next new Error("Not allowed to create users.")
-    else
-      next new Error("Not allowed to update users who are not you.")
+      if isServer then next()
+      else next new Error("Not allowed to create users.")
+    else next new Error("Not allowed to update users who are not you.")
 
 ###
   {store} The Racer store. Needed for setting up accessControl
