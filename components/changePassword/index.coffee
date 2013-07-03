@@ -1,4 +1,4 @@
-validator = require('../../node_modules/validator/validator-min')
+validator = require('validator/validator-min.js')
 check = validator.check
 sanitize = validator.sanitize
 utils = require('../../utils.coffee')
