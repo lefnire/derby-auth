@@ -31,11 +31,11 @@
     "passport-local": "~0.1.6",
     "connect-flash": "~0.1.1",
     "lodash": "~1.2.1",
-    "nodemailer": "~0.4.4",
     "validator": "~1.2.1",
     "express": "~3.2.6",
-    "racer": "git://github.com/codeparty/racer#master",
-    "coffee-script": "~1.6.3"
+    "racer": "0.5.x",
+    "coffee-script": "~1.6.3",
+    "nodemailer": "~0.4.4"
   },
   "scripts": {
     "start": "node example/server.js"
