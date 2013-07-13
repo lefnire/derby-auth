@@ -248,7 +248,8 @@ setupStaticRoutes = (expressApp, strategies) ->
   #   which, in this example, will redirect the user to the home page.
   #
   #   curl -v -d "username=bob&password=secret" http://127.0.0.1:3000/login
-  expressApp.post "/login", passport.authenticate("local", opts.passport)
+  loginOpts = _.defaults {failureFlash: 'Incorrect username or password.'}, opts.passport
+  expressApp.post "/login", passport.authenticate("local", loginOpts)
 
   # POST /login
   #   This is an alternative implementation that uses a custom callback to
