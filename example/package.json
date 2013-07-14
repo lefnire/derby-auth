@@ -8,6 +8,7 @@
     "derby-ui-boot": "git://github.com/codeparty/derby-ui-boot#master",
     "livedb-mongo": "git://github.com/share/livedb-mongo#master",
     "racer-browserchannel": "git://github.com/codeparty/racer-browserchannel#master",
+    "livedb": "0.1.5",
     "express": "~3.2.6",
     "connect-mongo": "~0.3.2",
     "redis": "~0.8.3",
