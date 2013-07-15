@@ -2,12 +2,10 @@ validator = require('validator/validator-min.js')
 check = validator.check
 sanitize = validator.sanitize
 utils = require('../../utils.coffee')
-jQuery = undefined
 
 exports.init = (model) ->
 
 exports.create = (model, dom) ->
-    #jQuery = window?.jQuery or require('../../vendor/jquery-1.10.1.min.js')
 
     model.on 'change', 'password', (password) ->
         return unless password
@@ -34,7 +32,7 @@ exports.create = (model, dom) ->
 exports.submitPasswordChange = (e, el) ->
     model = @model
     rootModel = model.parent().parent()
-    jQuery.ajax
+    $?.ajax
         url: '/password-change'
         type:'POST'
         data:

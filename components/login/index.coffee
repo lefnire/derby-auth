@@ -1,10 +1,8 @@
 utils = require('../../utils.coffee')
-jQuery = undefined
 
 exports.init = (model) ->
 
 exports.create = (model, dom) ->
-  #jQuery = window?.jQuery or require('../../vendor/jquery-1.10.1.min.js')
 
 exports.usernameBlur = ->
     # check username registered
@@ -39,7 +37,7 @@ exports.submitPasswordReset = () ->
                 throw new Error('Email not registered.')
             else
                 model.set('errors.passwordReset', '')
-                jQuery.ajax
+                $?.ajax
                     type: 'POST',
                     url: "/password-reset",
                     data:

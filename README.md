@@ -83,6 +83,8 @@ If you want drop-in Login and Register forms, including form validation, use the
    app.use require("derby-auth/components/index.coffee")
 ```
 
+NOTE: the components require jQuery in your app (window.$ must exist). See `example/server/index.coffee`'s `store.on('bundle')` for an example.
+
 See the [example](https://github.com/lefnire/derby-auth/tree/master/example) for more details, as well as login / registration forms, sign-in buttons, etc.
 
 ## Why not EveryAuth?
