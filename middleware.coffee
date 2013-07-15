@@ -223,8 +223,8 @@ setupPassport = (strategies) ->
         auth = $provider.get()?[0]
 
         # User already registered with this provider, login
-        if auth?[profile.provider]
-          login auth, req, null, done
+        return login(auth, req, null, done) if auth?[profile.provider]
+
 
         # Append accessToken & refreshToken to user's provider profile. They're often required, and
         # I see many other auth libraries doing this - if anyone is concerned about security, please contact me
