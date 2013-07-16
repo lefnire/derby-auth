@@ -30,7 +30,7 @@ store = derby.createStore
   redis: redis
 
 store.on 'bundle', (browserify) ->
-  browserify.add "#{publicDir}/vendor/jquery-1.10.1.min.js"
+  browserify.add "#{publicDir}/jquery-1.10.1.min.js"
   browserify.transform coffeeify
 
 ###
