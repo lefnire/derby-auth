@@ -1,5 +1,7 @@
 # Derby.js Authentication
 
+###@lefnire is no longer using Derby, so is no longer maintaing this project. Seeking new maintainers.
+
 NOTE: Please use the [0.5 branch](https://github.com/lefnire/derby-auth/tree/0.5) if you're using Derby/Racer 0.5
 
 Provides authentication middleware (using [Passport](http://passportjs.org/)) for use in your Derby projects.
