@@ -1,6 +1,6 @@
 # Derby.js Authentication
 
-###@lefnire is no longer using Derby, so is no longer maintaing this project. Seeking new maintainers.
+###derby-auth is no longer being maintained. There is а new derby 0.6/passportjs register/login project with projections so on - https://github.com/vmakhaev/derby-login
 
 NOTE: Please use the [0.5 branch](https://github.com/lefnire/derby-auth/tree/0.5) if you're using Derby/Racer 0.5
 
